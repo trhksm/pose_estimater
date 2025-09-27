@@ -35,7 +35,7 @@ class Qua
 
   def normalize
     n = norm
-    raise "Error: normalize() norm is almost 0" if n < 1e-10
+    raise "error: normalize() norm is almost 0" if n < 1e-10
     inv = 1.0 / n
     Qua.new(@a*inv, @b*inv, @c*inv, @d*inv)
   end
@@ -116,7 +116,7 @@ def distance_surface(oa, n, op)
   return v3dot(ap, n)        #h n方向を正とした距離
 end
 #A = P   の時 AP = 0 h = 0     OK
-#Aが平面上の時 APとnが垂直 h = 0 OK 
+#Aが平面上の時 APとnが垂直 h = 0 OK
 #A = O   の時 APとnが垂直 h = 0 OK
 #P = O   の時 AP//n h = |AP|   OK
 #oa opの向きのみ注意
@@ -136,7 +136,7 @@ def line_plane_intersection(oa,n,op,l,ox) #面上一点の座標,面の方線,�
   h = distance_surface(oa,n,op)
   cos_n_l = v3dot(n,l)
   if cos_n_l == 0.0
-    puts "error: Since l and n are parallel, there is no inter section point"
+    raise "error: Since l and n are parallel, there is no inter section point"
   else
     v3mul(-1.0 * h.to_f / cos_n_l, l, px)
     v3add(op, px, ox)
@@ -154,11 +154,11 @@ end
 
 #変更箇所
 height_camera = 0.9     #天井からカメラの距離[m]
-height_base   = 3.0     #天井からベース(機体のずれが生じている場所)の距離[m] 
+height_base   = 3.0     #天井からベース(機体のずれが生じている場所)の距離[m]
 deg_fovh = 81.0         #カメラ視野角(水平)
 deg_fovv = 40.0         #カメラ視野角(垂直)
-ratioh = 0.2            #対象点の画面内における水平割合(右上基準)
-ratiov = 0.3            #対象点の画面内における垂直割合(右上基準)
+ratioh = 0.2            #マーカーの画面内における水平割合(右上基準)
+ratiov = 0.3            #マーカーの画面内における垂直割合(右上基準)
 case_camera = 1         #0はベクトルでカメラ方向指定,elseは方位角・天頂角でカメラ方向指定
 
 camera = [0.3,0.1,5.0]  #カメラの方向ベクトル
@@ -181,33 +181,7 @@ ofs_camera = [0.0,0.0, -1 * height_camera]          #カメラ位置ベクトル
 ofs_base   = [0.0,0.0, -1 * height_base]            #ベース位置ベクトル
 oa  = [0.0,0.0,0.0]                                 #天井の一点
 
-#カメラ・ベースの方向ベクトル算出
-if case_camera == 0 #ベクトルで指定
-  camera_vec = []
-  base_vec   = []
-  v3nom(camera,camera_vec)
-  v3nom(base,base_vec)
-
-else                #角度で指定
-  rad_azimuth      = deg_azimuth * Math::PI / 180.0 
-  rad_zenith       = deg_zenith  * Math::PI / 180.0
-  rad_base_azimuth = deg_base_azimuth * Math::PI / 180.0
-  rad_base_zenith  = deg_base_zenith  * Math::PI / 180.0
-
-  #baseのずれ方向ベクトル(方位角と天頂角で指定する場合)
-  base_vec_x = Math.sin(rad_base_zenith) * Math.cos(rad_base_azimuth)
-  base_vec_y = Math.sin(rad_base_zenith) * Math.sin(rad_base_azimuth)
-  base_vec_z = Math.cos(rad_base_zenith) * -1                #z軸奥行きのため-
-  base_vec   = [base_vec_x, base_vec_y ,base_vec_z]
-
-  #カメラの視点方向ベクトル(方位角と天頂角で指定する場合)
-  camera_vec_x = Math.sin(rad_zenith) * Math.cos(rad_azimuth)
-  camera_vec_y = Math.sin(rad_zenith) * Math.sin(rad_azimuth)
-  camera_vec_z = Math.cos(rad_zenith) * -1                    #z軸奥行きのため-
-  camera_vec   = [camera_vec_x, camera_vec_y ,camera_vec_z]
-end
-
-#origin点算出
+#傾きのない場合の視野算出
 left_fov_origin_vec  = rot(axis_z, axis_y, oa, -1.0 * rad_fovh / 2.0)
 right_fov_origin_vec = rot(axis_z, axis_y, oa, rad_fovh / 2.0)
 
@@ -226,15 +200,40 @@ line_plane_intersection(oa,axis_z, ofs_camera, leftdown_fov_origin_vec , leftdow
 line_plane_intersection(oa,axis_z, ofs_camera, rightup_fov_origin_vec  , rightup_fov_origin)
 line_plane_intersection(oa,axis_z, ofs_camera, rightdown_fov_origin_vec, rightdown_fov_origin)
 
+#カメラ・ベースの方向ベクトル算出
+if case_camera == 0 #ベクトルで指定
+  camera_vec = []
+  base_vec   = []
+  v3nom(camera,camera_vec)
+  v3nom(base,base_vec)
 
-#baseずれ算出
+else                #角度で指定
+  rad_azimuth      = deg_azimuth * Math::PI / 180.0
+  rad_zenith       = deg_zenith  * Math::PI / 180.0
+  rad_base_azimuth = deg_base_azimuth * Math::PI / 180.0
+  rad_base_zenith  = deg_base_zenith  * Math::PI / 180.0
+
+  #baseのずれ方向ベクトル(方位角と天頂角で指定する場合)
+  base_vec_x = Math.sin(rad_base_zenith) * Math.cos(rad_base_azimuth)
+  base_vec_y = Math.sin(rad_base_zenith) * Math.sin(rad_base_azimuth)
+  base_vec_z = Math.cos(rad_base_zenith) * -1                #z軸奥行きのため-
+  base_vec   = [base_vec_x, base_vec_y ,base_vec_z]
+
+  #カメラの視点方向ベクトル(方位角と天頂角で指定する場合)
+  camera_vec_x = Math.sin(rad_zenith) * Math.cos(rad_azimuth)
+  camera_vec_y = Math.sin(rad_zenith) * Math.sin(rad_azimuth)
+  camera_vec_z = Math.cos(rad_zenith) * -1                    #z軸奥行きのため-
+  camera_vec   = [camera_vec_x, camera_vec_y ,camera_vec_z]
+end
+
+#ベースによるカメラ位置のずれ算出
 base_v   = []
 v3crs(base_vec,axis_z,base_v)
 rad_base = Math.acos(v3dot(base_vec,axis_z))
 ofs_camera = rot(ofs_camera,base_v,ofs_base, rad_base) #ここを無効化するとbaseのずれ考慮なしとなる
 
 
-#cameraずれ算出
+#傾きを踏まえた場合の視野算出
 camera_v = []
 v3crs(camera_vec, axis_z, camera_v)
 rad_camera = Math.acos(v3dot(camera_vec,axis_z))
@@ -255,7 +254,7 @@ line_plane_intersection(oa, axis_z, ofs_camera, rightup_fov_vec  , rightup_fov)
 line_plane_intersection(oa, axis_z, ofs_camera, rightdown_fov_vec, rightdown_fov)
 
 
-#対象点計算
+#マーカーの位置算出
 point_origin = [0.0,0.0,0.0]
 point        = [0.0,0.0,0.0]
 a = [];b = [];c = [];d = []
@@ -342,8 +341,9 @@ puts rad_base / Math::PI * 180.0
 
 =end
 
-puts "対象点ずれ x y [m]"
+puts "マーカーずれ x y [m]"
 puts point[0] - point_origin[0]
 puts point[1] - point_origin[1]
 
 p `gnuplot plot_fov.gp`
+
