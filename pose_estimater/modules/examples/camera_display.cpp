@@ -7,9 +7,9 @@ int main() {
     using namespace Modules::PoseEstimation;
 
     const char* devname = "/dev/video0";           // カメラデバイス
-    const char* param_file = "camera_param.xml";  // カメラパラメータ XML
-    int width = 640;
-    int height = 480;
+    const char* param_file = "../param/camera_calib/baffalo_BSW300M.xml";  // カメラパラメータ XML
+    int width = 1280;
+    int height = 720;
     int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
     int fps = 30;
 

@@ -14,7 +14,6 @@
 #pragma GCC diagnostic pop
 #include <thread>
 
-#include "configuration/types.hpp"
 
 namespace Modules::PoseEstimation {
 

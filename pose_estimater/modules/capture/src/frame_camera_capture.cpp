@@ -11,18 +11,18 @@ FrameCameraCapture::FrameCameraCapture(const char *devname, int img_w, int img_h
   cv::Size img_size(img_w_, img_h_); //画像の立てかけ横
   cv::FileStorage fs(param_filename, cv::FileStorage::READ); //データの読み込み
   if (!fs.isOpened()) {  //FileStrageの読み込みができない
-    _log_error("Failed to open param file: %s", param_filename); //エラーログ
+    //_log_error("Failed to open param file: %s", param_filename); //エラーログ
     throw std::runtime_error(std::string("Fail to Open : ") + param_filename);  //警告
   }
   fs["intrinsic"] >> geometry_param_.K; //intrinsic読み込み
   fs["distortion"] >> geometry_param_.D; //distorion読み込み
   fs.release(); //メモリ解放
-  _log_debug("Loaded camera parameters from: %s", param_filename); //読み込みファイル確認ログ
+  //_log_debug("Loaded camera parameters from: %s", param_filename); //読み込みファイル確認ログ
 
   // setup video capture
   cap_ = cv::VideoCapture(devname, cv::CAP_V4L2); //カメラのオブジェクト(Linux)
   if (!cap_.isOpened()) { //開けない場合
-    _log_error("Failed to open camera device: %s", devname);
+    //_log_error("Failed to open camera device: %s", devname);
     throw std::runtime_error(
         std::string("VideoCapture Setup Error (Fail to Open) : ") + devname);
   }
@@ -30,7 +30,7 @@ FrameCameraCapture::FrameCameraCapture(const char *devname, int img_w, int img_h
   cap_.set(cv::CAP_PROP_FPS, fps); //フレームレート
   cap_.set(cv::CAP_PROP_FRAME_WIDTH, img_w_); //画像の横ピクセル数
   cap_.set(cv::CAP_PROP_FRAME_HEIGHT, img_h_); //画像の縦ピクセル数
-  _log_info("Camera capture initialized: %s (%dx%d @ %d fps)", devname, img_w_, img_h_, fps);
+ // _log_info("Camera capture initialized: %s (%dx%d @ %d fps)", devname, img_w_, img_h_, fps);
   cap_.set(cv::CAP_PROP_BUFFERSIZE, buf_size); //内部バッファのサイズ(遅延性)
 
   cap_.set(cv::CAP_PROP_AUTO_EXPOSURE, 1); //自動露出
@@ -52,7 +52,7 @@ void FrameCameraCapture::process() {
   while (!end_flag_) {
     cap_.grab(); //フレームをキャプチャ
     {
-      std::lock_guard<std::mutex> lk(cap_buf_mutex_); lkがスコープを抜けるまで重複しないようにロック
+      std::lock_guard<std::mutex> lk(cap_buf_mutex_); //lkがスコープを抜けるまで重複しないようにロック
       cap_.retrieve(cap_buf_); //内部バッファをコピー・参照
       have_read_ = true;
       capture_time_point_ = std::chrono::steady_clock::now(); //時間記録
