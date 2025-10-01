@@ -4,16 +4,19 @@ CXXFLAGS := -std=c++17 -O2
 OPENCV_FLAGS := $(shell pkg-config --cflags opencv4)
 OPENCV_LIBS  := $(shell pkg-config --libs opencv4)
 
-SRC := camera_display.cpp \
-       ../capture/src/frame_capture_base.cpp \
-       ../capture/src/frame_camera_capture.cpp
+COMMON_SRC := ../capture/src/frame_capture_base.cpp \
+              ../capture/src/frame_camera_capture.cpp
 
-TARGET := test1
+TARGETS := capture_display detect_aruco
 
-all: $(TARGET)
+all: $(TARGETS)
 
-$(TARGET):
-	$(CXX) $(CXXFLAGS) $(OPENCV_FLAGS) $(SRC) -o $@ $(OPENCV_LIBS)
+capture_display: capture_display.cpp $(COMMON_SRC)
+	$(CXX) $(CXXFLAGS) $(OPENCV_FLAGS) $^ -o $@ $(OPENCV_LIBS)
+
+detect_aruco: detect_aruco.cpp $(COMMON_SRC)
+	$(CXX) $(CXXFLAGS) $(OPENCV_FLAGS) $^ -o $@ $(OPENCV_LIBS)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGETS)
+
