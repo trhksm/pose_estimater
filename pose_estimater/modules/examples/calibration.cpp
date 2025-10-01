@@ -33,12 +33,6 @@ int main() {
 	    cv::aruco::detectMarkers(frame, dictionary, corners, ids);
 
 	    if(!ids.empty()) {
-		for (size_t i = 0; i < ids.size(); i++) {
-		    std::cout << "[Marker Detected] ID     = " << ids[i] << std::endl;
-		    for ( int j = 0; j < 4; j++) {
-		        std::cout << "                  Corner = " << corners[i][j].x << ", " << corners[i][j].y << std::endl;
-		    }
-		}
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
 	    } 
 	    cv::imshow("ArUco",frame);
