@@ -66,3 +66,63 @@ void rot(const Vec3& p0, const Vec3& axis, const Vec3& ofs, double rad, Vec3& p1
 	rot0(org, axis, rad, p1);
 	p1[0]  += ofs[0]; p1[1]  += ofs[1]; p1[2]  += ofs[2];
 }
+
+
+void v3add(const Vec3& a, const Vec3& b, Vec3& out) {
+    out[0] = a[0] + b[0]; out[1] = a[1] + b[1]; out[2] = a[2] + b[2];
+}
+void v3sub(const Vec3& a, const Vec3& b, Vec3& out) {
+    out[0] = a[0] - b[0]; out[1] = a[1] - b[1]; out[2] = a[2] - b[2];
+}
+void v3mul(double c, const Vec3& a, Vec3& out) {
+    out[0] = c * a[0]; out[1] = c * a[1]; out[2] = c * a[2];
+}
+void v3cpy(const Vec3& a, Vec3& out) {
+    out[0] = a[0]; out[1] = a[1]; out[2] = a[2];
+}
+double v3len(const Vec3& a) {
+    return std::sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+}
+void v3nrm(const Vec3& a, Vec3& out) {
+    double len = v3len(a);
+    if (len < 1e-10) {
+        std::cout << "len of v3nrm is almost 0 : len " << len << std::endl;
+    } else {
+        std::cout << "len of v3nrm is " << len << std::endl;
+        v3mul(1.0 / len, a, out);
+    }
+}
+double v3dot(const Vec3& a, const Vec3& b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+void v3crs(const Vec3& a, const Vec3& b, Vec3& out) {
+    out[0] = a[1]*b[2] - a[2]*b[1];
+    out[1] = a[2]*b[0] - a[0]*b[2];
+    out[2] = a[0]*b[1] - a[1]*b[0];
+}
+double distance_surface(const Vec3& oa, const Vec3& n, const Vec3& op) {
+    Vec3 ap;
+    v3sub(op,oa,ap);
+    return v3dot(ap, n);        //h n方向を正とした距離
+}
+
+void foot_perpendicular(const Vec3& oa, const Vec3& n, const Vec3& op, Vec3& oq){
+    Vec3 pq;
+    double h = distance_surface(oa, n, op);
+    v3mul(-1.0 * h, n, pq);
+    v3add(op, pq, oq);
+}
+
+void line_plane_intersection(const Vec3& oa, const Vec3& n, const Vec3& op, const Vec3& l, Vec3& ox) {
+    Vec3 oq;
+    Vec3 px;
+    foot_perpendicular(oa,n,op,oq);
+    double h = distance_surface(oa,n,op);
+    double cos_n_l = v3dot(n,l);
+    if (cos_n_l == 0.0) {
+        std::cout << "error: Since l and n are parallel, there is no inter section point" << std::endl;//エラーの対応
+    } else {
+        v3mul(-1.0 * h / cos_n_l, l, px);
+        v3add(op, px, ox);
+    }
+}

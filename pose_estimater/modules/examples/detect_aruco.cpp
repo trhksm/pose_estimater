@@ -16,7 +16,7 @@ int main() {
 	    return 1;
 	}
 
-	cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
+	cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_7X7_1000);
 
 	cv::Mat frame;
 	cv::namedWindow("ArUco", cv::WINDOW_NORMAL);
