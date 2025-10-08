@@ -88,7 +88,6 @@ void v3nrm(const Vec3& a, Vec3& out) {
     if (len < 1e-10) {
         std::cout << "len of v3nrm is almost 0 : len " << len << std::endl;
     } else {
-        std::cout << "len of v3nrm is " << len << std::endl;
         v3mul(1.0 / len, a, out);
     }
 }

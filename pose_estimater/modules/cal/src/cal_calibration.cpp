@@ -3,7 +3,7 @@
 
 Vec3 get_camera_world_position(const Vec3& shelf_world_position, const Vec3& shelf_rotate_axis ,const double shelf_rotate_rad) {
     Vec3 camera_world_position;
-    const Vec3 ideal_camera_world_position = {shelf_world_position[0], shelf_world_position[1], CAMERA_HEIGHT};
+    const Vec3 ideal_camera_world_position = {shelf_world_position[0], shelf_world_position[1], -1 * CAMERA_HEIGHT};
     rot(ideal_camera_world_position ,shelf_rotate_axis ,shelf_world_position ,shelf_rotate_rad ,camera_world_position);
     return camera_world_position;
 }
@@ -14,50 +14,49 @@ std::vector<Vec3> get_ideal_fov_unit_vecs() {
     Vec3 left_fov_origin_vec;rot(AXIS_Z, AXIS_Y, ORIGIN, -1.0 * RAD_FOVH / 2.0, left_fov_origin_vec);
     Vec3 right_fov_origin_vec;rot(AXIS_Z, AXIS_Y, ORIGIN, RAD_FOVH / 2.0, right_fov_origin_vec);
 
-    rot(left_fov_origin_vec , AXIS_X, ORIGIN, -1.0 * RAD_FOVV / 2.0,ideal_fov_unit_vecs[0]); //leftup
-    rot(right_fov_origin_vec, AXIS_X, ORIGIN, -1.0 * RAD_FOVV / 2.0,ideal_fov_unit_vecs[1]); //rightup
-    rot(right_fov_origin_vec, AXIS_X, ORIGIN, RAD_FOVV / 2.0,ideal_fov_unit_vecs[2]); //rightdown
-    rot(left_fov_origin_vec , AXIS_X, ORIGIN, RAD_FOVV / 2.0,ideal_fov_unit_vecs[3]); //leftdown
+    rot(left_fov_origin_vec , AXIS_X, ORIGIN, RAD_FOVV / 2.0,ideal_fov_unit_vecs[0]); //leftup
+    rot(right_fov_origin_vec, AXIS_X, ORIGIN, RAD_FOVV / 2.0,ideal_fov_unit_vecs[1]); //rightup
+    rot(right_fov_origin_vec, AXIS_X, ORIGIN, -1.0 * RAD_FOVV / 2.0,ideal_fov_unit_vecs[2]); //rightdown
+    rot(left_fov_origin_vec , AXIS_X, ORIGIN, -1.0 * RAD_FOVV / 2.0,ideal_fov_unit_vecs[3]); //leftdown
     return ideal_fov_unit_vecs;
 }
 
 std::vector<Vec3> get_ideal_fov_positions(std::vector<Vec3> ideal_fov_unit_vecs, Vec3& camera_world_position){
     std::vector<Vec3> ideal_fov_positions = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position,ideal_fov_unit_vecs[0], ideal_fov_positions[0]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position,ideal_fov_unit_vecs[1], ideal_fov_positions[1]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position,ideal_fov_unit_vecs[2], ideal_fov_positions[2]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position,ideal_fov_unit_vecs[3], ideal_fov_positions[3]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_fov_unit_vecs[0], ideal_fov_positions[0]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_fov_unit_vecs[1], ideal_fov_positions[1]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_fov_unit_vecs[2], ideal_fov_positions[2]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_fov_unit_vecs[3], ideal_fov_positions[3]);
     return ideal_fov_positions;
 }
 
-std::vector<Vec3> get_ideal_aruco_unit_vecs(const Vec3& camera_world_position, const std::vector<cv::Point2f>& corner) {
+std::vector<Vec3> get_ideal_aruco_unit_vecs(const Vec3& camera_world_position, const std::vector<Vec3>& corner_positions) {
     std::vector<Vec3> ideal_aruco_vecs(4);
     std::vector<Vec3> ideal_aruco_unit_vecs(4);
-
     for (int i = 0; i < 4; ++i) {
-        Vec3 ci = {static_cast<double>(corner[i].x), static_cast<double>(corner[i].y), 0.0};
-        v3sub(ci, camera_world_position, ideal_aruco_vecs[i]);
+        v3sub(corner_positions[i], camera_world_position, ideal_aruco_vecs[i]);
         v3nrm(ideal_aruco_vecs[i], ideal_aruco_unit_vecs[i]);
     }
-
     return ideal_aruco_unit_vecs;
 }
 
 
 std::vector<Vec3> get_ideal_aruco_positions(const std::vector<Vec3> ideal_aruco_unit_vecs, const Vec3& camera_world_position) {
     std::vector<Vec3> ideal_aruco_positions = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, ideal_aruco_unit_vecs[0], ideal_aruco_positions[0]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, ideal_aruco_unit_vecs[1], ideal_aruco_positions[1]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, ideal_aruco_unit_vecs[2], ideal_aruco_positions[2]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, ideal_aruco_unit_vecs[3], ideal_aruco_positions[3]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_aruco_unit_vecs[0], ideal_aruco_positions[0]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_aruco_unit_vecs[1], ideal_aruco_positions[1]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_aruco_unit_vecs[2], ideal_aruco_positions[2]);
+    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, ideal_aruco_unit_vecs[3], ideal_aruco_positions[3]);
     return ideal_aruco_positions;
 }
 
 /*std::vector<std::vector<double>> get_ideal_aruco_screen_positions(const std::vector<Vec3> ideal_aruco_positions, const std::vector<Vec3> ideal_fov_positions) {
     double tol = 1e-4;
-    Vec3 a; a = ideal_fov_positions[2];
-    Vec3 b;v3sub(ideal_fov_positions[1], ideal_fov_positions[3],b);
-    Vec3 c;v3sub(ideal_fov_positions[3], ideal_fov_positions[1],c);
+    Vec3 a0;v3sub(ideal_fov_positions[0],ideal_fov_positions[1], a0);
+    Vec3 a1;v3add(a0,ideal_fov_positions[2], a1);
+    Vec3 a;v3sub(a1,ideal_fov_positions[3], a);
+    Vec3 b;v3sub(ideal_fov_positions[1], ideal_fov_positions[0],b);
+    Vec3 c;v3sub(ideal_fov_positions[3], ideal_fov_positions[0],c);
     Vec3 d;
     std::vector<std::vector<double>> ideal_aruco_screen_positions = {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}};
     for (int i = 0; i <= 3; i++) {
@@ -83,11 +82,12 @@ std::vector<Vec3> get_ideal_aruco_positions(const std::vector<Vec3> ideal_aruco_
 std::vector<std::vector<double>> get_ideal_aruco_screen_positions(
     const std::vector<Vec3>& ideal_aruco_positions,
     const std::vector<Vec3>& ideal_fov_positions) {
-
-    Vec3 a = ideal_fov_positions[2];
-    Vec3 b, c, d;
-    v3sub(ideal_fov_positions[1], ideal_fov_positions[3], b);
-    v3sub(ideal_fov_positions[3], ideal_fov_positions[1], c);
+    Vec3 a0;v3sub(ideal_fov_positions[0],ideal_fov_positions[1], a0);
+    Vec3 a1;v3add(a0,ideal_fov_positions[2], a1);
+    Vec3 a;v3sub(a1,ideal_fov_positions[3], a);
+    Vec3 b;v3sub(ideal_fov_positions[1], ideal_fov_positions[0],b);
+    Vec3 c;v3sub(ideal_fov_positions[3], ideal_fov_positions[0],c);
+    Vec3 d; 
 
     std::vector<std::vector<double>> screen_positions(4, std::vector<double>(2, 0.0));
 
@@ -114,7 +114,6 @@ std::vector<std::vector<double>> get_ideal_aruco_screen_positions(
 
             n += delta[0];
             l += delta[1];
-
             if (delta.norm() < tol) break;
         }
 
@@ -134,6 +133,7 @@ std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> 
         v3crs(difference_vecs[i],AXIS_Z,camera_rotate_axis[i]);
         v3nrm(camera_rotate_axis[i],camera_rotate_axis[i]); 
     }
+    //棚の向き（y軸正方向に一旦固定）
     return camera_rotate_axis;
 }
 
@@ -149,9 +149,11 @@ std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> 
     line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, fov_unit_vecs[2], fov_positions[2]);
     line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, fov_unit_vecs[3], fov_positions[3]);
     double tol = 1e-4;
-    Vec3 a; a = fov_positions[2];
-    Vec3 b;v3sub(fov_positions[1], fov_positions[3],b);
-    Vec3 c;v3sub(fov_positions[3], fov_positions[1],c);
+    Vec3 a0;v3sub(fov_positions[0],fov_positions[1], a0);
+    Vec3 a1;v3add(a0,fov_positions[2], a1);
+    Vec3 a;v3sub(a1,fov_positions[3], a);
+    Vec3 b;v3sub(fov_positions[1], fov_positions[0],b);
+    Vec3 c;v3sub(fov_positions[3], fov_positions[0],c);
     Vec3 d;
     std::vector<std::vector<double>> aruco_screen_positions = {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}};
     for (int i = 0; i <= 3; i++) {
@@ -177,22 +179,23 @@ std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> 
 
 std::vector<std::vector<double>> get_aruco_screen_positions(
     const std::vector<Vec3> camera_rotate_axis,
-    const double degree,
+    const double rad,
     const Vec3& camera_world_position,
     const std::vector<Vec3> ideal_fov_unit_vecs,
     const std::vector<Vec3> ideal_aruco_positions) {
 
     std::vector<Vec3> fov_unit_vecs(4), fov_positions(4);
     for (int i = 0; i < 4; ++i)
-        rot(ideal_fov_unit_vecs[i], camera_rotate_axis[0], CEILING_ORIGIN, degree, fov_unit_vecs[i]);
+        rot(ideal_fov_unit_vecs[i], camera_rotate_axis[0], CEILING_ORIGIN, rad, fov_unit_vecs[i]);
     for (int i = 0; i < 4; ++i)
         line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, fov_unit_vecs[i], fov_positions[i]);
 
-    Vec3 a = fov_positions[2];
-    Vec3 b, c, d;
-    v3sub(fov_positions[1], fov_positions[3], b);
-    v3sub(fov_positions[3], fov_positions[1], c);
-
+    Vec3 a0;v3sub(fov_positions[0],fov_positions[1], a0);
+    Vec3 a1;v3add(a0,fov_positions[2], a1);
+    Vec3 a;v3sub(a1,fov_positions[3], a);
+    Vec3 b;v3sub(fov_positions[1], fov_positions[0],b);
+    Vec3 c;v3sub(fov_positions[3], fov_positions[0],c);
+    Vec3 d;
     std::vector<std::vector<double>> aruco_screen_positions(4, std::vector<double>(2, 0.0));
 
     for (int i = 0; i < 4; ++i) {
@@ -228,25 +231,26 @@ std::vector<std::vector<double>> get_aruco_screen_positions(
     return aruco_screen_positions;
 }
 
-double get_camera_rotate_degree(const std::vector<Vec3> camera_rotate_axis, const std::vector<Vec3>ideal_aruco_positions, const Vec3& camera_world_position, const std::vector<Vec3> ideal_fov_unit_vecs ,const std::vector<cv::Point2f>& corner) {
-    double camera_rotate_degree = 0.0;
+double get_camera_rotate_rad(const std::vector<Vec3>& camera_rotate_axis, const std::vector<Vec3>& ideal_aruco_positions, const Vec3& camera_world_position, const std::vector<Vec3>& ideal_fov_unit_vecs ,const std::vector<cv::Point2f>& corner) {
+    double camera_rotate_rad = 0.0;
     double difference = 100000000.0;
     std::vector<std::vector<double>> aruco_screen_positions = {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}};
     std::vector<Vec3> differences = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-    for (double d = 0.0; d <= 90.0; d += 0.001) {
-        aruco_screen_positions = get_aruco_screen_positions(camera_rotate_axis, d , camera_world_position, ideal_fov_unit_vecs , ideal_aruco_positions);
+    for (double rad = 0.0; rad <= 90.0; rad += 0.0000001) {
+        aruco_screen_positions = get_aruco_screen_positions(camera_rotate_axis, rad , camera_world_position, ideal_fov_unit_vecs , ideal_aruco_positions);
         for (int i = 0; i <= 3; i++) {
             differences[i][0] = aruco_screen_positions[i][0] - corner[i].x;
             differences[i][1] = aruco_screen_positions[i][1] - corner[i].y;
         }
         double next_difference =  v3len(differences[0]) + v3len(differences[1]) + v3len(differences[2]) + v3len(differences[3]);
         if (difference < next_difference) {
-            camera_rotate_degree = d;
+            camera_rotate_rad = rad;
             break;
         } else {
             difference = next_difference;
         } 
     }
-    return camera_rotate_degree;
+    return camera_rotate_rad;
 }
+
 
