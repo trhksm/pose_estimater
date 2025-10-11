@@ -1,7 +1,5 @@
 #include "../include/cal_calibration.hpp"
 
-
-
 auto solve2x2 = [](double J00, double J01, double J10, double J11,
                    double F0, double F1, double& dx, double& dy) {
     double det = J00 * J11 - J01 * J10;
@@ -76,19 +74,6 @@ std::vector<std::vector<double>> get_ideal_aruco_screen_positions(
 
     std::vector<std::vector<double>> screen_positions(4, std::vector<double>(2, 0.0));
 
-    // --- 2x2線形方程式 J * delta = -F を解くラムダ関数 ---
-    auto solve2x2 = [](double J00, double J01, double J10, double J11,
-                       double F0, double F1, double& dx, double& dy) {
-        double det = J00 * J11 - J01 * J10;
-        if (std::fabs(det) < 1e-12) {
-            dx = dy = 0.0;
-            return false;
-        }
-        dx = (-F0 * J11 + F1 * J01) / det;
-        dy = (-F1 * J00 + F0 * J10) / det;
-        return true;
-    };
-
     for (int i = 0; i < 4; ++i) {
         v3sub(ideal_fov_positions[0], ideal_aruco_positions[i], d);
 
@@ -122,8 +107,6 @@ std::vector<std::vector<double>> get_ideal_aruco_screen_positions(
 
     return screen_positions;
 }
-
-
 
 std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> ideal_aruco_screen_positions, const std::vector<cv::Point2f>& corner) {
     std::vector<Vec3> difference_vecs = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
@@ -199,7 +182,6 @@ std::vector<std::vector<double>> get_aruco_screen_positions(
     return aruco_screen_positions;
 }
 
-
 std::vector<double> get_camera_rotate_rad(
     const std::vector<Vec3>& camera_rotate_axis,
     const std::vector<Vec3>& ideal_aruco_positions,
@@ -241,5 +223,3 @@ std::vector<double> get_camera_rotate_rad(
 
     return best_rad;
 }
-
-
