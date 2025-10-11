@@ -58,48 +58,7 @@ Vec3 getPositionFromCSVById(const std::string& filename, int target_id) {
     std::cerr << "ID " << target_id << " が見つかりませんでした。" << std::endl;
     return {0, 0, 0};
 }
-std::vector<double> readNumericColumnFromCSV(const std::string& filename, const std::string& columnName) {
-    std::ifstream file(filename);
-    std::string line;
-    std::vector<double> columnData;
-    std::unordered_map<std::string, int> columnIndexMap;
 
-    if (!file.is_open()) {
-        std::cerr << "CSVファイルを開けませんでした: " << filename << std::endl;
-        return columnData;
-    }
-
-    // ヘッダー行を読み取り
-    if (std::getline(file, line)) {
-        auto headers = split(line, ',');
-        for (size_t i = 0; i < headers.size(); ++i) {
-            columnIndexMap[headers[i]] = i;
-        }
-
-        // 該当列があるか確認
-        if (columnIndexMap.find(columnName) == columnIndexMap.end()) {
-            std::cerr << "列名 " << columnName << " が見つかりません。" << std::endl;
-            return columnData;
-        }
-
-        int colIndex = columnIndexMap[columnName];
-
-        // データ行を読み取り
-        while (std::getline(file, line)) {
-            auto values = split(line, ',');
-            if (colIndex < values.size()) {
-                try {
-                    double num = std::stod(values[colIndex]);
-                    columnData.push_back(num);
-                } catch (const std::exception& e) {
-                    std::cerr << "変換エラー: " << e.what() << std::endl;
-                }
-            }
-        }
-    }
-
-    return columnData;
-}
 // 方向ベクトルとして表示したい場合
 void save_vec3_vectors(const std::string& filename, const std::vector<Vec3>& directions) {
     std::ofstream ofs(filename);
@@ -129,7 +88,7 @@ std::vector<Vec3> get_aruco_corner_positions(std::vector<int>ids) {
 
 
 int main() {
-    const char* devname = "/dev/video0";
+    const char* devname = "/dev/video0";//要変更
     const char* param_file = "../param/camera_calib/baffalo_BSW300M.xml";
     int width = 1280;
     int height = 720;
@@ -180,8 +139,8 @@ int main() {
                 std::cout << ids[0] << std::endl;
                 std::vector<Vec3> corners_positions = get_aruco_corner_positions(ids);
 
-                std::vector<Vec3> ideal_aruco_unit_vecs = get_ideal_aruco_unit_vecs(camera_world_position, corners_positions);
-                std::vector<Vec3> ideal_aruco_positions = get_ideal_aruco_positions(ideal_aruco_unit_vecs, camera_world_position);
+                std::vector<Vec3> ideal_aruco_unit_vecs = get_ideal_aruco_unit_vecs(camera_world_position, corners_positions);//不必要かも
+                std::vector<Vec3> ideal_aruco_positions = get_ideal_aruco_positions(ideal_aruco_unit_vecs, camera_world_position);//不必要かも
 				std::vector<Vec3> ideal_fov_positions = get_ideal_fov_positions(ideal_fov_unit_vecs, camera_world_position);
                 std::vector<std::vector<double>> ideal_aruco_screen_positions = get_ideal_aruco_screen_positions(ideal_aruco_positions,ideal_fov_positions);
                 std::vector<Vec3> camera_rotate_axis = get_camera_rotate_axis(ideal_aruco_screen_positions, corners[0]);
@@ -225,7 +184,6 @@ int main() {
             cv::imshow("ArUco", frame);
 
             if(cv::waitKey(1) == 27) break;
-            //std::this_thread::sleep_for(std::chrono::seconds(3));
         }
     } catch (const std::exception &e) {
         std::cerr << "Exception: " << e.what() << std::endl;
@@ -234,4 +192,3 @@ int main() {
 
     return 0;
 }
-
