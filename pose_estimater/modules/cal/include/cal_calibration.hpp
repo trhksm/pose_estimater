@@ -9,8 +9,8 @@ const Vec3 AXIS_Z = {0.0, 0.0, 1.0};
 const Vec3 ORIGIN = {0.0, 0.0, 0.0};
 
 const double CAMERA_HEIGHT = 0.9;
-const double RAD_FOVH = 81.0 * M_PI / 180.0;
-const double RAD_FOVV = 48.60 * M_PI / 180.0;
+const double RAD_FOVH = 81 * M_PI / 180.0;
+const double RAD_FOVV = 56.5 * M_PI / 180.0;
 
 const Vec3 CEILING_ORIGIN = {0.0, 0.0, 0.0};
 const Vec3 CEILING_NORMAL = {0.0, 0.0, -1.0};
@@ -26,5 +26,5 @@ std::vector<Vec3> get_ideal_aruco_positions(const std::vector<Vec3> ideal_aruco_
 std::vector<std::vector<double>> get_ideal_aruco_screen_positions(const std::vector<Vec3>& ideal_aruco_positions, const std::vector<Vec3>& ideal_fov_positions);
 std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> ideal_aruco_screen_positions, const std::vector<cv::Point2f>& corner);
 std::vector<std::vector<double>> get_aruco_screen_positions(const std::vector<Vec3> camera_rotate_axis, const double degree ,const Vec3& camera_world_position, const std::vector<Vec3> ideal_fov_unit_vecs ,const std::vector<Vec3> ideal_aruco_positions);
-double get_camera_rotate_rad(const std::vector<Vec3>& camera_rotate_axis, const std::vector<Vec3>& ideal_aruco_positions, const Vec3& camera_world_position, const std::vector<Vec3>& ideal_fov_unit_vecs ,const std::vector<cv::Point2f>& corner);
+std::vector<double> get_camera_rotate_rad(const std::vector<Vec3>& camera_rotate_axis, const std::vector<Vec3>& ideal_aruco_positions, const Vec3& camera_world_position, const std::vector<Vec3>& ideal_fov_unit_vecs ,const std::vector<cv::Point2f>& corner);
 #endif

@@ -134,7 +134,8 @@ int main() {
     int width = 1280;
     int height = 720;
     int fourcc = cv::VideoWriter::fourcc('M','J','P','G');
-
+    
+    
     try {
         Modules::PoseEstimation::FrameCameraCapture cam(devname, width, height, fourcc, param_file);
 
@@ -165,6 +166,14 @@ int main() {
             std::vector<int> ids;
             std::vector<std::vector<cv::Point2f>> corners;
             cv::aruco::detectMarkers(frame, dictionary, corners, ids);
+            // フレームサイズ取得
+            int cx = frame.cols / 2;
+            int cy = frame.rows / 2;
+
+            // 中心に赤い十字マーカーを描く
+            cv::drawMarker(frame, cv::Point(cx, cy), cv::Scalar(0, 0, 255),  // 赤 (BGR)
+                cv::MARKER_CROSS, 20, 2);  // サイズ20px、太さ2
+
 
             if(!ids.empty()) {
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
@@ -176,9 +185,12 @@ int main() {
 				std::vector<Vec3> ideal_fov_positions = get_ideal_fov_positions(ideal_fov_unit_vecs, camera_world_position);
                 std::vector<std::vector<double>> ideal_aruco_screen_positions = get_ideal_aruco_screen_positions(ideal_aruco_positions,ideal_fov_positions);
                 std::vector<Vec3> camera_rotate_axis = get_camera_rotate_axis(ideal_aruco_screen_positions, corners[0]);
-                double camera_rotate_degree = get_camera_rotate_rad(camera_rotate_axis, ideal_aruco_positions, camera_world_position, ideal_fov_unit_vecs, corners[0]);
+                std::vector<double> camera_rotate_rad = get_camera_rotate_rad(camera_rotate_axis, ideal_aruco_positions, camera_world_position, ideal_fov_unit_vecs, corners[0]);
 
-                std::cout << "Camera Rotate Rad: " << camera_rotate_degree << std::endl;
+                std::cout << "Camera Rotate Rad 0: " << camera_rotate_rad[0] << std::endl;
+                std::cout << "Camera Rotate Rad 1: " << camera_rotate_rad[1] << std::endl;
+                std::cout << "Camera Rotate Rad 2: " << camera_rotate_rad[2] << std::endl;
+                std::cout << "Camera Rotate Rad 3: " << camera_rotate_rad[3] << std::endl;
 
                 for (const auto& pos : ideal_aruco_unit_vecs) {
                     std::cout << "ideal_aruco_unit_vecs: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
@@ -222,6 +234,4 @@ int main() {
 
     return 0;
 }
-
-
 

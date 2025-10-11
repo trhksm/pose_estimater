@@ -3,13 +3,13 @@ set xlabel "X"
 set ylabel "Y"
 set zlabel "Z"
 set grid
-set view 0, 0
+set view 30, 30
 set key outside
 
 # 3Dプロットの範囲調整（必要に応じて）
-set xrange [-6:6]
-set yrange [-6:6]
-set zrange [-6:6]
+set xrange [-2:2]
+set yrange [0:2]
+set zrange [-2:2]
 
 # splot で複数のベクトルファイルを描画
 splot \

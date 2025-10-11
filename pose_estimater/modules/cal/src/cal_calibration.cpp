@@ -1,5 +1,18 @@
 #include "../include/cal_calibration.hpp"
-#include <Eigen/Dense>
+
+
+
+auto solve2x2 = [](double J00, double J01, double J10, double J11,
+                   double F0, double F1, double& dx, double& dy) {
+    double det = J00 * J11 - J01 * J10;
+    if (std::fabs(det) < 1e-12) { // 特異行列チェック
+        dx = dy = 0.0;
+        return false;
+    }
+    dx = (-F0 * J11 + F1 * J01) / det;
+    dy = (-F1 * J00 + F0 * J10) / det;
+    return true;
+};
 
 Vec3 get_camera_world_position(const Vec3& shelf_world_position, const Vec3& shelf_rotate_axis ,const double shelf_rotate_rad) {
     Vec3 camera_world_position;
@@ -50,46 +63,31 @@ std::vector<Vec3> get_ideal_aruco_positions(const std::vector<Vec3> ideal_aruco_
     return ideal_aruco_positions;
 }
 
-/*std::vector<std::vector<double>> get_ideal_aruco_screen_positions(const std::vector<Vec3> ideal_aruco_positions, const std::vector<Vec3> ideal_fov_positions) {
-    double tol = 1e-4;
-    Vec3 a0;v3sub(ideal_fov_positions[0],ideal_fov_positions[1], a0);
-    Vec3 a1;v3add(a0,ideal_fov_positions[2], a1);
-    Vec3 a;v3sub(a1,ideal_fov_positions[3], a);
-    Vec3 b;v3sub(ideal_fov_positions[1], ideal_fov_positions[0],b);
-    Vec3 c;v3sub(ideal_fov_positions[3], ideal_fov_positions[0],c);
-    Vec3 d;
-    std::vector<std::vector<double>> ideal_aruco_screen_positions = {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}};
-    for (int i = 0; i <= 3; i++) {
-        v3sub(ideal_fov_positions[0], ideal_aruco_positions[i] ,d);
-        bool found = false;
-        for (double n = 0; n <= 1; n += 0.001) {
-            for (double l = 0; l <= 1; l += 0.001) {
-                double eq1 = a[0]*n*l + b[0]*n + c[0]*l + d[0];
-                double eq2 = a[1]*n*l + b[1]*n + c[1]*l + d[1];
-                if (std::abs(eq1) < tol && std::abs(eq2) < tol) {
-                    found = true;
-                    ideal_aruco_screen_positions[i][0] = n * WIDTH_PX;
-                    ideal_aruco_screen_positions[i][1] = l * HEIGHT_PX;
-                    break;
-                }
-            }
-            if (found) break;
-        }
-    }
-    return ideal_aruco_screen_positions;
-}
-*/
 std::vector<std::vector<double>> get_ideal_aruco_screen_positions(
     const std::vector<Vec3>& ideal_aruco_positions,
-    const std::vector<Vec3>& ideal_fov_positions) {
-    Vec3 a0;v3sub(ideal_fov_positions[0],ideal_fov_positions[1], a0);
-    Vec3 a1;v3add(a0,ideal_fov_positions[2], a1);
-    Vec3 a;v3sub(a1,ideal_fov_positions[3], a);
-    Vec3 b;v3sub(ideal_fov_positions[1], ideal_fov_positions[0],b);
-    Vec3 c;v3sub(ideal_fov_positions[3], ideal_fov_positions[0],c);
-    Vec3 d; 
+    const std::vector<Vec3>& ideal_fov_positions)
+{
+    Vec3 a0; v3sub(ideal_fov_positions[0], ideal_fov_positions[1], a0);
+    Vec3 a1; v3add(a0, ideal_fov_positions[2], a1);
+    Vec3 a;  v3sub(a1, ideal_fov_positions[3], a);
+    Vec3 b;  v3sub(ideal_fov_positions[1], ideal_fov_positions[0], b);
+    Vec3 c;  v3sub(ideal_fov_positions[3], ideal_fov_positions[0], c);
+    Vec3 d;
 
     std::vector<std::vector<double>> screen_positions(4, std::vector<double>(2, 0.0));
+
+    // --- 2x2線形方程式 J * delta = -F を解くラムダ関数 ---
+    auto solve2x2 = [](double J00, double J01, double J10, double J11,
+                       double F0, double F1, double& dx, double& dy) {
+        double det = J00 * J11 - J01 * J10;
+        if (std::fabs(det) < 1e-12) {
+            dx = dy = 0.0;
+            return false;
+        }
+        dx = (-F0 * J11 + F1 * J01) / det;
+        dy = (-F1 * J00 + F0 * J10) / det;
+        return true;
+    };
 
     for (int i = 0; i < 4; ++i) {
         v3sub(ideal_fov_positions[0], ideal_aruco_positions[i], d);
@@ -103,18 +101,19 @@ std::vector<std::vector<double>> get_ideal_aruco_screen_positions(
             double f1 = a[0] * n * l + b[0] * n + c[0] * l + d[0];
             double f2 = a[1] * n * l + b[1] * n + c[1] * l + d[1];
 
-            Eigen::Matrix2d J;
-            J(0, 0) = a[0] * l + b[0];  // ∂f1/∂n
-            J(0, 1) = a[0] * n + c[0];  // ∂f1/∂l
-            J(1, 0) = a[1] * l + b[1];  // ∂f2/∂n
-            J(1, 1) = a[1] * n + c[1];  // ∂f2/∂l
+            double J00 = a[0] * l + b[0];
+            double J01 = a[0] * n + c[0];
+            double J10 = a[1] * l + b[1];
+            double J11 = a[1] * n + c[1];
 
-            Eigen::Vector2d F(f1, f2);
-            Eigen::Vector2d delta = J.fullPivLu().solve(-F);
+            double delta_n = 0.0, delta_l = 0.0;
+            if (!solve2x2(J00, J01, J10, J11, f1, f2, delta_n, delta_l)) break;
 
-            n += delta[0];
-            l += delta[1];
-            if (delta.norm() < tol) break;
+            n += delta_n;
+            l += delta_l;
+
+            if (std::sqrt(delta_n * delta_n + delta_l * delta_l) < tol)
+                break;
         }
 
         screen_positions[i][0] = n * WIDTH_PX;
@@ -123,6 +122,7 @@ std::vector<std::vector<double>> get_ideal_aruco_screen_positions(
 
     return screen_positions;
 }
+
 
 
 std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> ideal_aruco_screen_positions, const std::vector<cv::Point2f>& corner) {
@@ -137,71 +137,40 @@ std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> 
     return camera_rotate_axis;
 }
 
-/*std::vector<std::vector<double>> get_aruco_screen_positions(const std::vector<Vec3> camera_rotate_axis, const double degree ,const Vec3& camera_world_position, const std::vector<Vec3> ideal_fov_unit_vecs ,const std::vector<Vec3> ideal_aruco_positions) {
-    std::vector<Vec3> fov_unit_vecs = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-    std::vector<Vec3> fov_positions = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-    rot(ideal_fov_unit_vecs[0],camera_rotate_axis[0],CEILING_ORIGIN, degree,fov_unit_vecs[0]);
-    rot(ideal_fov_unit_vecs[1],camera_rotate_axis[0],CEILING_ORIGIN, degree,fov_unit_vecs[1]);
-    rot(ideal_fov_unit_vecs[2],camera_rotate_axis[0],CEILING_ORIGIN, degree,fov_unit_vecs[2]);
-    rot(ideal_fov_unit_vecs[3],camera_rotate_axis[0],CEILING_ORIGIN, degree,fov_unit_vecs[3]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, fov_unit_vecs[0], fov_positions[0]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, fov_unit_vecs[1], fov_positions[1]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, fov_unit_vecs[2], fov_positions[2]);
-    line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL , camera_world_position, fov_unit_vecs[3], fov_positions[3]);
-    double tol = 1e-4;
-    Vec3 a0;v3sub(fov_positions[0],fov_positions[1], a0);
-    Vec3 a1;v3add(a0,fov_positions[2], a1);
-    Vec3 a;v3sub(a1,fov_positions[3], a);
-    Vec3 b;v3sub(fov_positions[1], fov_positions[0],b);
-    Vec3 c;v3sub(fov_positions[3], fov_positions[0],c);
-    Vec3 d;
-    std::vector<std::vector<double>> aruco_screen_positions = {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}};
-    for (int i = 0; i <= 3; i++) {
-        v3sub(fov_positions[0], ideal_aruco_positions[i] ,d);
-        bool found = false;
-        for (double n = 0; n <= 1; n += 0.001) {
-            for (double l = 0; l <= 1; l += 0.001) {
-                double eq1 = a[0]*n*l + b[0]*n + c[0]*l + d[0];
-                double eq2 = a[1]*n*l + b[1]*n + c[1]*l + d[1];
-                if (std::abs(eq1) < tol && std::abs(eq2) < tol) {
-                    found = true;
-                    aruco_screen_positions[i][0] = n * WIDTH_PX;
-                    aruco_screen_positions[i][1] = l * HEIGHT_PX;
-                    break;
-                }
-            }
-            if (found) break;
-        }
-    }
-    return aruco_screen_positions;
-}
-*/
-
 std::vector<std::vector<double>> get_aruco_screen_positions(
     const std::vector<Vec3> camera_rotate_axis,
     const double rad,
     const Vec3& camera_world_position,
     const std::vector<Vec3> ideal_fov_unit_vecs,
-    const std::vector<Vec3> ideal_aruco_positions) {
-
+    const std::vector<Vec3> ideal_aruco_positions)
+{
     std::vector<Vec3> fov_unit_vecs(4), fov_positions(4);
-    for (int i = 0; i < 4; ++i)
-        rot(ideal_fov_unit_vecs[i], camera_rotate_axis[0], CEILING_ORIGIN, rad, fov_unit_vecs[i]);
-    for (int i = 0; i < 4; ++i)
-        line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, fov_unit_vecs[i], fov_positions[i]);
-
-    Vec3 a0;v3sub(fov_positions[0],fov_positions[1], a0);
-    Vec3 a1;v3add(a0,fov_positions[2], a1);
-    Vec3 a;v3sub(a1,fov_positions[3], a);
-    Vec3 b;v3sub(fov_positions[1], fov_positions[0],b);
-    Vec3 c;v3sub(fov_positions[3], fov_positions[0],c);
-    Vec3 d;
     std::vector<std::vector<double>> aruco_screen_positions(4, std::vector<double>(2, 0.0));
 
-    for (int i = 0; i < 4; ++i) {
-        v3sub(fov_positions[0], ideal_aruco_positions[i], d);
+    auto solve2x2 = [](double J00, double J01, double J10, double J11,
+                       double F0, double F1, double& dx, double& dy) {
+        double det = J00 * J11 - J01 * J10;
+        if (std::fabs(det) < 1e-12) { dx = dy = 0.0; return false; }
+        dx = (-F0 * J11 + F1 * J01) / det;
+        dy = (-F1 * J00 + F0 * J10) / det;
+        return true;
+    };
 
-        double n = 0.5, l = 0.5;  // 初期値
+    for (int j = 0; j < 4; ++j) {
+
+        for (int i = 0; i < 4; ++i)
+            rot(ideal_fov_unit_vecs[i], camera_rotate_axis[j], CEILING_ORIGIN, rad / 2, fov_unit_vecs[i]);
+        for (int i = 0; i < 4; ++i)
+            line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, fov_unit_vecs[i], fov_positions[i]);
+
+        Vec3 a0; v3sub(fov_positions[0], fov_positions[1], a0);
+        Vec3 a1; v3add(a0, fov_positions[2], a1);
+        Vec3 a;  v3sub(a1, fov_positions[3], a);
+        Vec3 b;  v3sub(fov_positions[1], fov_positions[0], b);
+        Vec3 c;  v3sub(fov_positions[3], fov_positions[0], c);
+        Vec3 d;  v3sub(fov_positions[0], ideal_aruco_positions[j], d);
+
+        double n = 0.5, l = 0.5;
         const double tol = 1e-6;
         const int max_iter = 50;
 
@@ -209,48 +178,68 @@ std::vector<std::vector<double>> get_aruco_screen_positions(
             double f1 = a[0] * n * l + b[0] * n + c[0] * l + d[0];
             double f2 = a[1] * n * l + b[1] * n + c[1] * l + d[1];
 
-            Eigen::Matrix2d J;
-            J(0, 0) = a[0] * l + b[0];  // ∂f1/∂n
-            J(0, 1) = a[0] * n + c[0];  // ∂f1/∂l
-            J(1, 0) = a[1] * l + b[1];  // ∂f2/∂n
-            J(1, 1) = a[1] * n + c[1];  // ∂f2/∂l
+            double J00 = a[0] * l + b[0];
+            double J01 = a[0] * n + c[0];
+            double J10 = a[1] * l + b[1];
+            double J11 = a[1] * n + c[1];
 
-            Eigen::Vector2d F(f1, f2);
-            Eigen::Vector2d delta = J.fullPivLu().solve(-F);
+            double delta_n = 0.0, delta_l = 0.0;
+            if (!solve2x2(J00, J01, J10, J11, f1, f2, delta_n, delta_l)) break;
 
-            n += delta[0];
-            l += delta[1];
+            n += delta_n;
+            l += delta_l;
 
-            if (delta.norm() < tol) break;
+            if (std::sqrt(delta_n * delta_n + delta_l * delta_l) < tol) break;
         }
 
-        aruco_screen_positions[i][0] = n * WIDTH_PX;
-        aruco_screen_positions[i][1] = l * HEIGHT_PX;
+        aruco_screen_positions[j][0] = n * WIDTH_PX;
+        aruco_screen_positions[j][1] = l * HEIGHT_PX;
     }
 
     return aruco_screen_positions;
 }
 
-double get_camera_rotate_rad(const std::vector<Vec3>& camera_rotate_axis, const std::vector<Vec3>& ideal_aruco_positions, const Vec3& camera_world_position, const std::vector<Vec3>& ideal_fov_unit_vecs ,const std::vector<cv::Point2f>& corner) {
-    double camera_rotate_rad = 0.0;
-    double difference = 100000000.0;
-    std::vector<std::vector<double>> aruco_screen_positions = {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}};
-    std::vector<Vec3> differences = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-    for (double rad = 0.0; rad <= 90.0; rad += 0.0000001) {
-        aruco_screen_positions = get_aruco_screen_positions(camera_rotate_axis, rad , camera_world_position, ideal_fov_unit_vecs , ideal_aruco_positions);
-        for (int i = 0; i <= 3; i++) {
-            differences[i][0] = aruco_screen_positions[i][0] - corner[i].x;
-            differences[i][1] = aruco_screen_positions[i][1] - corner[i].y;
+
+std::vector<double> get_camera_rotate_rad(
+    const std::vector<Vec3>& camera_rotate_axis,
+    const std::vector<Vec3>& ideal_aruco_positions,
+    const Vec3& camera_world_position,
+    const std::vector<Vec3>& ideal_fov_unit_vecs,
+    const std::vector<cv::Point2f>& corner)
+{
+    std::vector<double> best_rad(4, 0.0);
+    std::vector<double> min_difference(4, 1e9);
+    std::vector<std::vector<double>> aruco_screen_positions(4, std::vector<double>(2, 0.0));
+
+    std::vector<double> step_levels = {1e-2, 1e-3, 1e-4, 1e-5, 1e-6};
+
+    double search_range = 1.57;
+
+    for (size_t level = 0; level < step_levels.size(); ++level) {
+        double step = step_levels[level];
+        for (int i = 0; i < 4; ++i) {
+            double start = std::max(0.0, best_rad[i] - search_range);
+            double end   = std::min(1.57, best_rad[i] + search_range);
+
+            for (double rad = start; rad <= end; rad += step) {
+                auto screen_positions = get_aruco_screen_positions(
+                    camera_rotate_axis, rad, camera_world_position,
+                    ideal_fov_unit_vecs, ideal_aruco_positions);
+
+                Vec3 difference_vec = {screen_positions[i][0] - corner[i].x,
+                             screen_positions[i][1] - corner[i].y, 0.0};
+                double difference = v3len(difference_vec);
+
+                if (difference < min_difference[i]) {
+                    min_difference[i] = difference;
+                    best_rad[i] = rad;
+                }
+            }
         }
-        double next_difference =  v3len(differences[0]) + v3len(differences[1]) + v3len(differences[2]) + v3len(differences[3]);
-        if (difference < next_difference) {
-            camera_rotate_rad = rad;
-            break;
-        } else {
-            difference = next_difference;
-        } 
+        search_range = step * 10.0;
     }
-    return camera_rotate_rad;
+
+    return best_rad;
 }
 
 
