@@ -1,4 +1,5 @@
 #include "../include/cal_calibration.hpp"
+#include "../include/cal_base.hpp"
 
 auto solve2x2 = [](double J00, double J01, double J10, double J11,
                    double F0, double F1, double& dx, double& dy) {

@@ -53,7 +53,7 @@ void save_vec3_vectors(const std::string& filename, const std::vector<Vec3>& dir
 
     for (const auto& d : directions) {
         // 始点(0,0,0)から方向ベクトルdへ
-        ofs << 0.0 << " " << 0.0 << " " << 0.0 << " "
+        ofs << 0.0 << " " << 0.0 << " " << -0.9 << " "
             << d[0] << " " << d[1] << " " << d[2] << "\n";
     }
 }
@@ -62,7 +62,7 @@ std::vector<Vec3> get_aruco_corner_positions(std::vector<int>ids) {
     int target_id = ids[0];
     std::string column_name = std::to_string(target_id);
 
-    Vec3 corner_center_position = getPositionFromCSVById("data.csv", target_id);
+    Vec3 corner_center_position = getPositionFromCSVById("../marker/data/data.csv", target_id);
     double cx = corner_center_position[0];
     double cy = corner_center_position[1];
     std::vector<Vec3> corner_positions = {{cx + 0.04, cy - 0.04, 0.0},{cx + 0.04,cy + 0.04, 0.0},{cx - 0.04,cy + 0.04, 0.0},{cx - 0.04, cy - 0.04, 0.0}};

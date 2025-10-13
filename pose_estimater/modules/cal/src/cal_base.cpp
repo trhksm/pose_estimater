@@ -34,7 +34,7 @@ double Qua::norm() const {
 
 Qua Qua::normalize() const {
     double n = norm();
-    if ( n < 1e-10) throw std::runtime_error("error: normalize() norm is almost 0");
+    //if ( n < 1e-10) throw std::runtime_error("error: normalize() norm is almost 0");
     double inv = 1.0 / n;
     return Qua(a*inv, b*inv, c*inv, d*inv);
 }
@@ -85,11 +85,11 @@ double v3len(const Vec3& a) {
 }
 void v3nrm(const Vec3& a, Vec3& out) {
     double len = v3len(a);
-    if (len < 1e-10) {
-        std::cout << "len of v3nrm is almost 0 : len " << len << std::endl;
-    } else {
+    //if (len < 1e-10) {
+    //    std::cout << "len of v3nrm is almost 0 : len " << len << std::endl;
+    //} else {
         v3mul(1.0 / len, a, out);
-    }
+    //}
 }
 double v3dot(const Vec3& a, const Vec3& b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];

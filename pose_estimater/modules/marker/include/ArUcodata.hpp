@@ -1,6 +1,7 @@
 #ifndef ARUCODATA_HPP
 #define ARUCODATA_HPP
 
+#include "../../cal/include/cal_base.hpp"
 #include <iostream>   
 #include <fstream>
 #include <sstream>
