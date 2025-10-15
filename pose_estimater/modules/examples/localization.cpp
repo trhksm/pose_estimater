@@ -60,12 +60,12 @@ int main() {
             if(!ids.empty()) {
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
                 std::cout << ids[0] << std::endl;
-                std::vector<Vec3> aruco_world_positions = get_aruco_corner_positions(ids);//calib must be modified
+                std::vector<std::vector<Vec3>> aruco_corners_positions = get_aruco_corners_positions(ids);//calib must be modified
 
-                //get shelf_pose
+                //get shelf_pose変え途中shelfに対応
                 Vec3 camera_pose                         = {0.0,0.0,1.0};//get_camera_pose(calibration_camera_pose, calibration_shelf_pose, shelf_pose);
-                Vec3 camera_rotate_axis                  = {1.0, 0.0,0.0};//get_camera_rotate_axis(camera_pose);
-                double camera_rotate_rad                 = 0.0;//get_camera_rotate_rad(camera_pose);
+                Vec3 camera_rotate_axis                  = {0.566864, -0.823812,0.0};//get_camera_rotate_axis(camera_pose);
+                double camera_rotate_rad                 = 0.007791;//get_camera_rotate_rad(camera_pose);
                 std::vector<Vec3> fov_vecs               = get_fov_vecs(ideal_fov_unit_vecs, camera_rotate_axis, camera_rotate_rad);
                 std::vector<Vec3> camera_to_aruco_vecs   = get_camera_to_aruco_vecs(corners[0], fov_vecs);
                 std::vector<Vec3> camera_world_positions = get_camera_world_positions(camera_to_aruco_vecs, aruco_world_positions);

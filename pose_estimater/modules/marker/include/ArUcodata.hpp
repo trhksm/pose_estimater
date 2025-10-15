@@ -12,5 +12,5 @@
 std::vector<std::string> split(const std::string& s, char delimiter);
 Vec3 getPositionFromCSVById(const std::string& filename, int target_id);
 void save_vec3_vectors(const std::string& filename, const std::vector<Vec3>& directions);
-std::vector<Vec3> get_aruco_corner_positions(std::vector<int>ids);
+std::vector<std::vector<Vec3>> get_aruco_corners_positions(const std::vector<int>& ids);
 #endif

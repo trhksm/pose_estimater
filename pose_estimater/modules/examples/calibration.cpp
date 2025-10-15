@@ -63,47 +63,25 @@ int main() {
 
             if(!ids.empty()) {
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
-                std::cout << ids[0] << std::endl;
-                std::vector<Vec3> corners_positions = get_aruco_corner_positions(ids);
+                std::vector<std::vector<Vec3>> corners_positions = get_aruco_corners_positions(ids);
+                for (int i = 0; i < corners_positions.size(); i++ ) {
 
-                std::vector<Vec3> ideal_aruco_unit_vecs = get_ideal_aruco_unit_vecs(camera_world_position, corners_positions);//不必要かも
-                std::vector<Vec3> ideal_aruco_positions = get_ideal_aruco_positions(ideal_aruco_unit_vecs, camera_world_position);//不必要かも
-				std::vector<Vec3> ideal_fov_positions = get_ideal_fov_positions(ideal_fov_unit_vecs, camera_world_position);
-                std::vector<std::vector<double>> ideal_aruco_screen_positions = get_ideal_aruco_screen_positions(ideal_aruco_positions,ideal_fov_positions);
-                std::vector<Vec3> camera_rotate_axis = get_camera_rotate_axis(ideal_aruco_screen_positions, corners[0]);
-                std::vector<double> camera_rotate_rad = get_camera_rotate_rad(camera_rotate_axis, ideal_aruco_positions, camera_world_position, ideal_fov_unit_vecs, corners[0]);
+                    std::vector<Vec3> ideal_aruco_unit_vecs = get_ideal_aruco_unit_vecs(camera_world_position, corners_positions[i]);//不必要かも
+                    std::vector<Vec3> ideal_aruco_positions = get_ideal_aruco_positions(ideal_aruco_unit_vecs, camera_world_position);//不必要かも
+                    std::vector<Vec3> ideal_fov_positions = get_ideal_fov_positions(ideal_fov_unit_vecs, camera_world_position);
+                    std::vector<std::vector<double>> ideal_aruco_screen_positions = get_ideal_aruco_screen_positions(ideal_aruco_positions,ideal_fov_positions);
+                    std::vector<Vec3> camera_rotate_axis = get_camera_rotate_axis(ideal_aruco_screen_positions, corners[i]);
+                    std::vector<double> camera_rotate_rad = get_camera_rotate_rad(camera_rotate_axis, ideal_aruco_positions, camera_world_position, ideal_fov_unit_vecs, corners[i]);
 
-                std::cout << "Camera Rotate Rad 0: " << camera_rotate_rad[0] << std::endl;
-                std::cout << "Camera Rotate Rad 1: " << camera_rotate_rad[1] << std::endl;
-                std::cout << "Camera Rotate Rad 2: " << camera_rotate_rad[2] << std::endl;
-                std::cout << "Camera Rotate Rad 3: " << camera_rotate_rad[3] << std::endl;
+                    for (int j = 0; j < camera_rotate_axis.size(); j++) {
+                        std::cout <<"id :" << ids[i] <<"camera_rotate" << j << " :(" << camera_rotate_axis[j][0] << ", " << camera_rotate_axis[j][1] << ", " << camera_rotate_axis[j][2] << ")  : " << camera_rotate_rad[j]  << std::endl;
+                    }
 
-                for (const auto& pos : ideal_aruco_unit_vecs) {
-                    std::cout << "ideal_aruco_unit_vecs: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
+                    save_vec3_vectors("../testdata/calibration/ideal_aruco_unit_vecs.txt", ideal_aruco_unit_vecs);
+                    save_vec3_vectors("../testdata/calibration/ideal_aruco_positions.txt", ideal_aruco_positions);
+                    save_vec3_vectors("../testdata/calibration/ideal_fov_positions.txt", ideal_fov_positions);
+                    save_vec3_vectors("../testdata/calibration/camera_rotate_axis.txt", camera_rotate_axis);
                 }
-                for (const auto& pos : ideal_aruco_positions) {
-                    std::cout << "ideal_aruco_positions :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                }
-                for (const auto& pos : ideal_fov_positions) {
-                    std::cout << "ideal_fov_positions :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                }
-                for (const auto& pos : ideal_aruco_screen_positions) {
-                    std::cout << "ideal_aruco_screen_positions :(" << pos[0] << ", " << pos[1] << ")" << std::endl;
-                }
-                for (const auto& pos : camera_rotate_axis) {
-                    std::cout << "camera_rotate_axis :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                }
-                for (size_t i = 0; i < corners.size(); ++i) {
-                    std::cout << "ID: " << ids[i] << std::endl;
-                    for (size_t j = 0; j < corners[i].size(); ++j) {
-                        const auto& pt = corners[i][j];
-                        std::cout << "  corner[" << j << "]: (" << pt.x << ", " << pt.y << ")" << std::endl;
-                    }    
-                }
-                save_vec3_vectors("../testdata/calibration/ideal_aruco_unit_vecs.txt", ideal_aruco_unit_vecs);
-                save_vec3_vectors("../testdata/calibration/ideal_aruco_positions.txt", ideal_aruco_positions);
-                save_vec3_vectors("../testdata/calibration/ideal_fov_positions.txt", ideal_fov_positions);
-                save_vec3_vectors("../testdata/calibration/camera_rotate_axis.txt", camera_rotate_axis);
             }
 
             cv::imshow("ArUco", frame);

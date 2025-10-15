@@ -9,8 +9,8 @@ const Vec3 AXIS_Z = {0.0, 0.0, 1.0};
 const Vec3 ORIGIN = {0.0, 0.0, 0.0};
 
 const double CAMERA_HEIGHT = 0.9;
-const double RAD_FOVH = 81 * M_PI / 180.0;
-const double RAD_FOVV = 56.5 * M_PI / 180.0;
+const double RAD_FOVH = 80.22 * M_PI / 180.0;
+const double RAD_FOVV = 57.80 * M_PI / 180.0;
 
 const Vec3 CEILING_ORIGIN = {0.0, 0.0, 0.0};
 const Vec3 CEILING_NORMAL = {0.0, 0.0, -1.0};

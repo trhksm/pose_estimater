@@ -143,7 +143,7 @@ std::vector<std::vector<double>> get_aruco_screen_positions(
     for (int j = 0; j < 4; ++j) {
 
         for (int i = 0; i < 4; ++i)
-            rot(ideal_fov_unit_vecs[i], camera_rotate_axis[j], CEILING_ORIGIN, rad / 2, fov_unit_vecs[i]);
+            rot(ideal_fov_unit_vecs[i], camera_rotate_axis[j], CEILING_ORIGIN, rad, fov_unit_vecs[i]);
         for (int i = 0; i < 4; ++i)
             line_plane_intersection(CEILING_ORIGIN, CEILING_NORMAL, camera_world_position, fov_unit_vecs[i], fov_positions[i]);
 
@@ -195,8 +195,33 @@ std::vector<double> get_camera_rotate_rad(
     std::vector<std::vector<double>> aruco_screen_positions(4, std::vector<double>(2, 0.0));
 
     std::vector<double> step_levels = {1e-2, 1e-3, 1e-4, 1e-5, 1e-6};
-
     double search_range = 1.57;
+    for (size_t level = 0; level < step_levels.size(); ++level) {
+        double step = step_levels[level];
+        for (int i = 0; i < 4; ++i) {
+            double start = best_rad[i] - search_range;
+            double end   = best_rad[i] + search_range;
+
+            for (double rad = start; rad <= end; rad += step) {
+                auto screen_positions = get_aruco_screen_positions(
+                    camera_rotate_axis, rad, camera_world_position,
+                    ideal_fov_unit_vecs, ideal_aruco_positions);
+
+                Vec3 difference_vec = {screen_positions[i][0] - corner[i].x,
+                                    screen_positions[i][1] - corner[i].y, 0.0};
+                double difference = v3len(difference_vec);
+
+                if (difference < min_difference[i]) {
+                    min_difference[i] = difference;
+                    best_rad[i] = rad;
+                }
+            }
+        }
+        
+        search_range = step * 10.0;
+    }
+
+    /*double search_range = 1.57;
 
     for (size_t level = 0; level < step_levels.size(); ++level) {
         double step = step_levels[level];
@@ -220,7 +245,8 @@ std::vector<double> get_camera_rotate_rad(
             }
         }
         search_range = step * 10.0;
-    }
-
+    }*/
+    for (auto& r : best_rad)
+        r *= 2.0;
     return best_rad;
 }
