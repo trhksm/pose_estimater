@@ -60,25 +60,52 @@ std::vector<Vec3> get_fov_vecs(const std::vector<Vec3>& ideal_fov_unit_vecs, con
     return fov_vecs;
 }
 
-std::vector<Vec3> get_camera_to_aruco_vecs(const std::vector<cv::Point2f>& corners, const std::vector<Vec3>& fov_vecs){
+std::vector<std::vector<Vec3>> get_camera_to_aruco_vecs(const std::vector<std::vector<cv::Point2f>>& corners, const std::vector<Vec3>& fov_vecs){
     double n = 0.0;
     double l = 0.0;
-    std::vector<Vec3> camera_to_aruco_vecs  = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-
-    for(int i = 0;i < 4;i++){
-        n = corners[i].x / WIDTH_PX;
-        l = corners[i].y / HEIGHT_PX;
-        camera_to_aruco_vecs[i][0] = (1-n)*(1-l)*fov_vecs[0][0] + n * (1-l) * fov_vecs[1][0]+ n * l * fov_vecs[2][0] + (1-n) * l * fov_vecs[3][0]; //まだ回転は考慮しない
-        camera_to_aruco_vecs[i][1] = (1-n)*(1-l)*fov_vecs[0][1] + n * (1-l) * fov_vecs[1][1]+ n * l * fov_vecs[2][1] + (1-n) * l * fov_vecs[3][1]; //まだ回転は考慮しない
-        camera_to_aruco_vecs[i][2] = (1-n)*(1-l)*fov_vecs[0][2] + n * (1-l) * fov_vecs[1][2]+ n * l * fov_vecs[2][2] + (1-n) * l * fov_vecs[3][2]; //まだ回転は考慮しない・おそらく不必要
+    std::vector<std::vector<Vec3>> camera_to_aruco_vecs(corners.size(), std::vector<Vec3>(4, Vec3{0.0, 0.0, 0.0}));
+    for(int i = 0;i < corners.size();i++){
+        for(int j = 0;j < 4;j++){
+            n = corners[i][j].x / WIDTH_PX;
+            l = corners[i][j].y / HEIGHT_PX;
+            camera_to_aruco_vecs[i][j][0] = (1-n)*(1-l)*fov_vecs[0][0] + n * (1-l) * fov_vecs[1][0]+ n * l * fov_vecs[2][0] + (1-n) * l * fov_vecs[3][0]; //まだ回転は考慮しない
+            camera_to_aruco_vecs[i][j][1] = (1-n)*(1-l)*fov_vecs[0][1] + n * (1-l) * fov_vecs[1][1]+ n * l * fov_vecs[2][1] + (1-n) * l * fov_vecs[3][1]; //まだ回転は考慮しない
+            camera_to_aruco_vecs[i][j][2] = (1-n)*(1-l)*fov_vecs[0][2] + n * (1-l) * fov_vecs[1][2]+ n * l * fov_vecs[2][2] + (1-n) * l * fov_vecs[3][2]; //まだ回転は考慮しない・おそらく不必要
+        }
     }
     return camera_to_aruco_vecs;
 }
 
-std::vector<Vec3> get_camera_world_positions(const std::vector<Vec3>& camera_to_aruco_vecs,  const std::vector<Vec3>& aruco_world_positions){
-    std::vector<Vec3> camera_world_positions  = {{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0}};
-    for(int i = 0;i < 4;i++){
-        v3sub(aruco_world_positions[i], camera_to_aruco_vecs[i], camera_world_positions[i]);
+Vec3 get_camera_world_positions(
+    const std::vector<std::vector<Vec3>>& camera_to_aruco_vecs,
+    const std::vector<std::vector<Vec3>>& pairs_aruco_corners_positions)
+{
+    Vec3 sum_all{0.0, 0.0, 0.0};
+    size_t total_count = pairs_aruco_corners_positions.size();
+
+    for (size_t i = 0; i < total_count; i++) {
+        Vec3 sum{0.0, 0.0, 0.0};
+        for (int j = 0; j < 4; j++) {
+            Vec3 diff;
+            v3sub(pairs_aruco_corners_positions[i][j],
+                  camera_to_aruco_vecs[i][j],
+                  diff);
+            sum[0] += diff[0];
+            sum[1] += diff[1];
+            sum[2] += diff[2];
+        }
+        // 1つのマーカーあたり4コーナーの平均
+        Vec3 avg = { sum[0]/4, sum[1]/4, sum[2]/4 };
+        sum_all[0] += avg[0];
+        sum_all[1] += avg[1];
+        sum_all[2] += avg[2];
     }
-    return camera_world_positions;
+
+    // 全マーカー分の平均位置を返す
+    if (total_count > 0) {
+        sum_all[0] /= total_count;
+        sum_all[1] /= total_count;
+        sum_all[2] /= total_count;
+    }
+    return sum_all;
 }

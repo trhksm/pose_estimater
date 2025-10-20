@@ -18,13 +18,15 @@ const Vec3 CEILING_NORMAL = {0.0, 0.0, -1.0};
 const int WIDTH_PX = 1280;
 const int HEIGHT_PX = 720;
 
+//2
 Vec3 get_camera_world_position(const Vec3& shelf_world_position, const Vec3& shelf_rotate_axis ,const double shelf_rotate_rad);
 std::vector<Vec3> get_ideal_fov_unit_vecs();
 std::vector<Vec3> get_ideal_fov_positions(std::vector<Vec3> ideal_fov_unit_vecs, Vec3& camera_world_position);
 std::vector<Vec3> get_ideal_aruco_unit_vecs(const Vec3& camera_world_position,const std::vector<Vec3>& corner_positions);
 std::vector<Vec3> get_ideal_aruco_positions(const std::vector<Vec3> ideal_aruco_unit_vecs, const Vec3& camera_world_position);
 std::vector<std::vector<double>> get_ideal_aruco_screen_positions(const std::vector<Vec3>& ideal_aruco_positions, const std::vector<Vec3>& ideal_fov_positions);
-std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> ideal_aruco_screen_positions, const std::vector<cv::Point2f>& corner);
+std::vector<Vec3> get_camera_rotate_axis(const std::vector<std::vector<double>> ideal_aruco_screen_positions, const std::vector<cv::Point2f>& corner);//
+//std::vector<Vec3> get_multi_camera_rotate_axis(const std::vector<std::vector<double>& ideal_aruco_screen_positions, const std::vector<std::vector<cv>>& corners)
 std::vector<std::vector<double>> get_aruco_screen_positions(const std::vector<Vec3> camera_rotate_axis, const double degree ,const Vec3& camera_world_position, const std::vector<Vec3> ideal_fov_unit_vecs ,const std::vector<Vec3> ideal_aruco_positions);
-std::vector<double> get_camera_rotate_rad(const std::vector<Vec3>& camera_rotate_axis, const std::vector<Vec3>& ideal_aruco_positions, const Vec3& camera_world_position, const std::vector<Vec3>& ideal_fov_unit_vecs ,const std::vector<cv::Point2f>& corner);
+std::vector<double> get_camera_rotate_rad(const std::vector<Vec3>& camera_rotate_axis, const std::vector<Vec3>& ideal_aruco_positions, const Vec3& camera_world_position, const std::vector<Vec3>& ideal_fov_unit_vecs ,const std::vector<cv::Point2f>& corner);//
 #endif

@@ -67,18 +67,18 @@ int main() {
                 Vec3 camera_rotate_axis                  = {0.566864, -0.823812,0.0};//get_camera_rotate_axis(camera_pose);
                 double camera_rotate_rad                 = 0.007791;//get_camera_rotate_rad(camera_pose);
                 std::vector<Vec3> fov_vecs               = get_fov_vecs(ideal_fov_unit_vecs, camera_rotate_axis, camera_rotate_rad);
-                std::vector<Vec3> camera_to_aruco_vecs   = get_camera_to_aruco_vecs(corners[0], fov_vecs);
-                std::vector<Vec3> camera_world_positions = get_camera_world_positions(camera_to_aruco_vecs, aruco_world_positions);
+                std::vector<std::vector<Vec3>> camera_to_aruco_vecs   = get_camera_to_aruco_vecs(corners, fov_vecs);
+                std::vector<std::vector<int>> pairs_id_and_index = get_pairs_id_and_index(ids, corners);
+                std::vector<std::vector<Vec3>> pairs_aruco_corners_positions = get_pairs_aruco_corners_positions(pairs_id_and_index);
+                Vec3 camera_world_positions = get_camera_world_positions(camera_to_aruco_vecs, pairs_aruco_corners_positions);
                 
                 for (const auto& pos : fov_vecs) {
                     std::cout << "fov_vecs: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
                 }
-                for (const auto& pos : camera_to_aruco_vecs) {
-                    std::cout << "camera_to_aruco_vecs :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                }
-                for (const auto& pos : camera_world_positions) {
-                    std::cout << "camera_world_positions :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                }
+                //for (const auto& pos : camera_to_aruco_vecs) {
+                  //  std::cout << "camera_to_aruco_vecs :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
+                //}
+                std::cout << "camera_world_positions :(" << camera_world_positions[0] << ", " << camera_world_positions[1] << ", " << camera_world_positions[2] << ")" << std::endl;
                 for (size_t i = 0; i < corners.size(); ++i) {
                     std::cout << "ID: " << ids[i] << std::endl;
                     for (size_t j = 0; j < corners[i].size(); ++j) {
@@ -87,10 +87,10 @@ int main() {
                     }    
                 }
 
-                save_vec3_vectors("../testdata/localization/ideal_fov_unit_vecs.txt", ideal_fov_unit_vecs);
-                save_vec3_vectors("../testdata/localization/fov_vecs.txt", fov_vecs);
-                save_vec3_vectors("../testdata/localization/camera_to_aruco_vecs.txt", camera_to_aruco_vecs);
-                save_vec3_vectors("../testdata/localization/camera_world_positions.txt", camera_world_positions);
+                //save_vec3_vectors("../testdata/localization/ideal_fov_unit_vecs.txt", ideal_fov_unit_vecs);
+                //save_vec3_vectors("../testdata/localization/fov_vecs.txt", fov_vecs);
+                //save_vec3_vectors("../testdata/localization/camera_to_aruco_vecs.txt", camera_to_aruco_vecs);
+                //save_vec3_vectors("../testdata/localization/camera_world_positions.txt", camera_world_positions);
             } 
             cv::imshow("ArUco", frame);
 
