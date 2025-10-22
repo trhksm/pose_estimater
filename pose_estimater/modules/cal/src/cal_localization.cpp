@@ -78,17 +78,18 @@ std::vector<std::vector<Vec3>> get_camera_to_aruco_vecs(const std::vector<std::v
 
 Vec3 get_camera_world_positions(
     const std::vector<std::vector<Vec3>>& camera_to_aruco_vecs,
-    const std::vector<std::vector<Vec3>>& pairs_aruco_corners_positions)
+    const std::vector<std::pair<std::vector<Vec3>,int>>& pairs_aruco_corners_positions_and_index)
 {
     Vec3 sum_all{0.0, 0.0, 0.0};
-    size_t total_count = pairs_aruco_corners_positions.size();
+    size_t total_count = pairs_aruco_corners_positions_and_index.size();
 
     for (size_t i = 0; i < total_count; i++) {
+        int index = pairs_aruco_corners_positions_and_index[i].second;
         Vec3 sum{0.0, 0.0, 0.0};
         for (int j = 0; j < 4; j++) {
             Vec3 diff;
-            v3sub(pairs_aruco_corners_positions[i][j],
-                  camera_to_aruco_vecs[i][j],
+            v3sub(pairs_aruco_corners_positions_and_index[i].first[j],
+                  camera_to_aruco_vecs[index][j],
                   diff);
             sum[0] += diff[0];
             sum[1] += diff[1];

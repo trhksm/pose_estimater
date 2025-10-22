@@ -59,34 +59,35 @@ int main() {
                 cv::MARKER_CROSS, 20, 2);  // サイズ20px、太さ2
             if(!ids.empty()) {
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
-                std::cout << ids[0] << std::endl;
-                std::vector<std::vector<Vec3>> aruco_corners_positions = get_aruco_corners_positions(ids);//calib must be modified
+                //std::cout << ids[0] << std::endl;
+                //std::vector<std::vector<Vec3>> aruco_corners_positions = get_aruco_corners_positions(ids);//calib must be modified
 
-                //get shelf_pose変え途中shelfに対応
+                //get shelf_pose変え途中shelfに対応id :3camera_rotate0 :(0.518254, -0.855227, 0)  : 0.022923
+                //(0.379477, -0.925201, 0)  : 0.019612
                 Vec3 camera_pose                         = {0.0,0.0,1.0};//get_camera_pose(calibration_camera_pose, calibration_shelf_pose, shelf_pose);
-                Vec3 camera_rotate_axis                  = {0.566864, -0.823812,0.0};//get_camera_rotate_axis(camera_pose);
-                double camera_rotate_rad                 = 0.007791;//get_camera_rotate_rad(camera_pose);
+                Vec3 camera_rotate_axis                  = {0.379477, -0.925201,0.0};//get_camera_rotate_axis(camera_pose);
+                double camera_rotate_rad                 = 0.019612;//get_camera_rotate_rad(camera_pose);
                 std::vector<Vec3> fov_vecs               = get_fov_vecs(ideal_fov_unit_vecs, camera_rotate_axis, camera_rotate_rad);
                 std::vector<std::vector<Vec3>> camera_to_aruco_vecs   = get_camera_to_aruco_vecs(corners, fov_vecs);
                 std::vector<std::vector<int>> pairs_id_and_index = get_pairs_id_and_index(ids, corners);
-                std::vector<std::vector<Vec3>> pairs_aruco_corners_positions = get_pairs_aruco_corners_positions(pairs_id_and_index);
-                Vec3 camera_world_positions = get_camera_world_positions(camera_to_aruco_vecs, pairs_aruco_corners_positions);
+                std::vector<std::pair<std::vector<Vec3>,int>> pairs_aruco_corners_positions_and_index = get_pairs_aruco_corners_positions_and_index(pairs_id_and_index);
+                Vec3 camera_world_positions = get_camera_world_positions(camera_to_aruco_vecs, pairs_aruco_corners_positions_and_index);
                 
-                for (const auto& pos : fov_vecs) {
+                /*for (const auto& pos : fov_vecs) {
                     std::cout << "fov_vecs: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                }
+                }*/
                 //for (const auto& pos : camera_to_aruco_vecs) {
                   //  std::cout << "camera_to_aruco_vecs :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
                 //}
                 std::cout << "camera_world_positions :(" << camera_world_positions[0] << ", " << camera_world_positions[1] << ", " << camera_world_positions[2] << ")" << std::endl;
-                for (size_t i = 0; i < corners.size(); ++i) {
+                /*for (size_t i = 0; i < corners.size(); ++i) {
                     std::cout << "ID: " << ids[i] << std::endl;
                     for (size_t j = 0; j < corners[i].size(); ++j) {
                         const auto& pt = corners[i][j];
                         std::cout << "  corner[" << j << "]: (" << pt.x << ", " << pt.y << ")" << std::endl;
                     }    
                 }
-
+                */
                 //save_vec3_vectors("../testdata/localization/ideal_fov_unit_vecs.txt", ideal_fov_unit_vecs);
                 //save_vec3_vectors("../testdata/localization/fov_vecs.txt", fov_vecs);
                 //save_vec3_vectors("../testdata/localization/camera_to_aruco_vecs.txt", camera_to_aruco_vecs);

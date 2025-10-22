@@ -83,6 +83,7 @@ std::vector<std::vector<Vec3>> get_aruco_corners_positions(const std::vector<int
 
 std::vector<std::vector<int>> get_pairs_id_and_index(const std::vector<int>& ids, const std::vector<std::vector<cv::Point2f>>& corners){
     int detected_num = corners.size();
+    int acceptable_pair_dist = 100;//check later
     std::vector<cv::Point2f> centers(detected_num);
     std::vector<cv::Point2f> right_dir(detected_num);
     std::vector<std::vector<int>> pairs_id_and_index;
@@ -95,13 +96,12 @@ std::vector<std::vector<int>> get_pairs_id_and_index(const std::vector<int>& ids
         right_dir[i] = corners[i][1] - corners[i][0];
     }
 
-    //距離の近いマーカーでペア作成
     for (int i = 0; i < detected_num; i++) {
-        if (used[i]) continue;
+        if (used[i]) continue;//check later
 
         int nearest_index = -1;
         float min_dist = std::numeric_limits<float>::max();
-
+        //一番近いマーカ探し
         for (int j = 0; j < detected_num; j++) {
             if (i == j || used[j]) continue;
 
@@ -114,12 +114,12 @@ std::vector<std::vector<int>> get_pairs_id_and_index(const std::vector<int>& ids
                 nearest_index = j;
             }
         }
+        if ( min_dist > acceptable_pair_dist) continue;
 
+        //ペアに追加
         if (nearest_index != -1) {
-            //左右の区別
             cv::Point2f diff = centers[nearest_index] - centers[i];
-            float dot = diff.x * right_dir[i].x + diff.y * right_dir[i].y;
-
+            float dot = diff.x * right_dir[i].x + diff.y * right_dir[i].y;            
             if (dot > 0) {
                 // neighborが右側
                 pairs_id_and_index.push_back({ids[i], ids[nearest_index],i,nearest_index});
@@ -136,10 +136,10 @@ std::vector<std::vector<int>> get_pairs_id_and_index(const std::vector<int>& ids
     return pairs_id_and_index;
 }
 
-std::vector<std::vector<Vec3>> get_pairs_aruco_corners_positions(
+std::vector<std::pair<std::vector<Vec3>,int>> get_pairs_aruco_corners_positions_and_index(
     const std::vector<std::vector<int>>& pairs_id_and_index)
 {
-    std::vector<std::vector<Vec3>> pairs_aruco_corners_positions(pairs_id_and_index.size() * 2);
+    std::vector<std::pair<std::vector<Vec3>,int>> pairs_aruco_corners_positions_and_index;
     std::string filename = "../marker/data/data2.csv";
     std::ifstream ifs(filename);
 
@@ -160,11 +160,14 @@ std::vector<std::vector<Vec3>> get_pairs_aruco_corners_positions(
         if (tokens.size() < 6) continue;
         csv_data.push_back(tokens);
     }
-
     for (const auto& pair : pairs_id_and_index) {
         int id1 = pair[0];
         int id2 = pair[1];
+        int idx1 = pair[2];
+        int idx2 = pair[3];
         bool found = false;
+
+        std::cout << "Processing pair ids: (" << id1 << ", " << id2 << "), indices: (" << idx1 << ", " << idx2 << ")" << std::endl;
 
         for (const auto& tokens : csv_data) {
             try {
@@ -185,7 +188,7 @@ std::vector<std::vector<Vec3>> get_pairs_aruco_corners_positions(
         if (!found) {
             std::cerr << "ペア (" << id1 << ", " << id2 << ") が見つかりません。" << std::endl;
         }
-        double cy1 = cy - 0.05;double cy2 = cy + 0.05;
+        double cy1 = cy - 0.05; double cy2 = cy + 0.05;
         std::vector<Vec3> corners1 = {
             {cx + 0.04, cy1 - 0.04, 0.0},
             {cx + 0.04, cy1 + 0.04, 0.0},
@@ -199,9 +202,8 @@ std::vector<std::vector<Vec3>> get_pairs_aruco_corners_positions(
             {cx - 0.04, cy2 - 0.04, 0.0}
         };
 
-        pairs_aruco_corners_positions[pair[2]] = corners1;
-        pairs_aruco_corners_positions[pair[3]] = corners2;
+        pairs_aruco_corners_positions_and_index.push_back({corners1,idx1});
+        pairs_aruco_corners_positions_and_index.push_back({corners2,idx2});
     }
-
-    return pairs_aruco_corners_positions;
+    return pairs_aruco_corners_positions_and_index;
 }

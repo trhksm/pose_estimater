@@ -26,5 +26,5 @@ double get_camera_rotate_rad(const Vec3& camera_pose);
 std::vector<Vec3> get_ideal_fov_unit_vecs();
 std::vector<Vec3> get_fov_vecs(const std::vector<Vec3>& ideal_fov_unit_vecs, const  Vec3& camera_rotate_axis, const double& camera_rotate_rad);
 std::vector<std::vector<Vec3>> get_camera_to_aruco_vecs(const std::vector<std::vector<cv::Point2f>>& corners, const std::vector<Vec3>& fov_vecs);
-Vec3 get_camera_world_positions(const std::vector<std::vector<Vec3>>& camera_to_aruco_vecs,  const std::vector<std::vector<Vec3>>& pairs_aruco_corners_positions);
+Vec3 get_camera_world_positions(const std::vector<std::vector<Vec3>>& camera_to_aruco_vecs,  const std::vector<std::pair<std::vector<Vec3>,int>>& pairs_aruco_corners_positions_and_index);
 #endif

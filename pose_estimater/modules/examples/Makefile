@@ -29,7 +29,7 @@ calibration: calibration.cpp $(COMMON_SRC) $(CAL_CALIBRATION_SRC) $(MARKER_SRC)
 	$(CXX) $(CXXFLAGS) $(OPENCV_FLAGS) $^ -o $@ $(OPENCV_LIBS)
 
 localization: localization.cpp $(COMMON_SRC) $(CAL_LOCALIZATION_SRC) $(MARKER_SRC)
-	$(CXX) $(CXXFLAGS) $(OPENCV_FLAGS) $^ -o $@ $(OPENCV_LIBS)
+	$(CXX)  $(CXXFLAGS) $(OPENCV_FLAGS) $^ -g -o $@ $(OPENCV_LIBS)
 
 
 clean:
