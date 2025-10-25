@@ -15,7 +15,13 @@ CAL_LOCALIZATION_SRC := ../cal/src/cal_base.cpp \
 
 MARKER_SRC := ../marker/src/ArUcodata.cpp
 
-TARGETS := capture_display detect_aruco calibration localization
+IMU_SRC := ../hw_imu_module/src/imu.cpp \
+           ../hw_serial_module/src/serial.cpp \
+		   ../utils_module/src/time_api/time_api_real.cpp \
+		   ../utils_module/src/time_api/time_api_simulator.cpp \
+
+
+TARGETS := capture_display detect_aruco calibration localization localization_w_imu
 
 all: $(TARGETS)
 
@@ -31,6 +37,11 @@ calibration: calibration.cpp $(COMMON_SRC) $(CAL_CALIBRATION_SRC) $(MARKER_SRC)
 localization: localization.cpp $(COMMON_SRC) $(CAL_LOCALIZATION_SRC) $(MARKER_SRC)
 	$(CXX)  $(CXXFLAGS) $(OPENCV_FLAGS) $^ -g -o $@ $(OPENCV_LIBS)
 
+calibration_w_imu: calibration_w_imu.cpp $(COMMON_SRC) $(CAL_CALIBRATION_SRC) $(MARKER_SRC) $(IMU_SRC)
+	$(CXX) $(CXXFLAGS) $(OPENCV_FLAGS) $^ -o $@ $(OPENCV_LIBS)
+
+localization_w_imu: localization_w_imu.cpp $(COMMON_SRC) $(CAL_LOCALIZATION_SRC) $(MARKER_SRC) $(IMU_SRC)
+	$(CXX)  $(CXXFLAGS) $(OPENCV_FLAGS) $^ -g -o $@ $(OPENCV_LIBS)
 
 clean:
 	rm -f $(TARGETS)

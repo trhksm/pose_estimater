@@ -1,6 +1,7 @@
 #include "../capture/include/frame_camera_capture.hpp"
 #include "../cal/include/cal_localization.hpp"
 #include "../marker/include/ArUcodata.hpp"
+#include "../hw_imu_module/include/imu.hpp"
 #include <opencv2/aruco.hpp>
 #include <opencv2/highgui.hpp>
 #include <iostream>
@@ -13,6 +14,13 @@
 #include <unordered_map>
 #include <thread>
 #include <chrono>
+
+//カメラの位置を固定してキャリブレーションしていることに留意
+//キャリブレーションのときは棚、カメラそれぞれワールドに対応した絶対角
+//自己位置推定のときは棚の角の変位分カメラを傾ける
+//座標はカメラのぶんを表示
+//棚の傾きは直接的には使わず、その変化で対応させる
+//カメラの位置は
 
 int main() {
     const char* devname = "/dev/video0";//要変更
@@ -35,11 +43,17 @@ int main() {
         cv::namedWindow("ArUco", cv::WINDOW_NORMAL);
 
         //arg for test 
-        Vec3 calibration_camera_pose = {0.0,0.0,1.0};
-        Vec3 calibration_shelf_pose = {0.0,0.0,1.0};
-        Vec3 shelf_pose = {0.0,0.0,1.0};
+        double calibration_pitch = 0;//get_calibration_pitch()
+        double calibration_roll = 0;//get_calibration_roll()
+        Vec3 calibration_shelf_pose = get_calibration_shelf_pose(calibration_pitch,calibration_roll);
+        Vec3 calibration_camera_pose = {0.0,0.0,1.0};//get_calibration_camera_pose()
         std::vector<Vec3> ideal_fov_unit_vecs = get_ideal_fov_unit_vecs();
 
+        Modules::Hardware::IMU imu("pass",calibration_pitch,calibration_roll);//must be changed
+        imu.init();
+        double pitch = 0.0;
+        double roll  = 0.0;
+        
         while(true) {
             std::chrono::steady_clock::time_point tp;
             if (!cam.read_until(frame, tp, 500)) {
@@ -57,21 +71,20 @@ int main() {
             // 中心に赤い十字マーカーを描く
             cv::drawMarker(frame, cv::Point(cx, cy), cv::Scalar(0, 0, 255),  // 赤 (BGR)
                 cv::MARKER_CROSS, 20, 2);  // サイズ20px、太さ2
+            
             if(!ids.empty()) {
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
-                //std::cout << ids[0] << std::endl;
-                //std::vector<std::vector<Vec3>> aruco_corners_positions = get_aruco_corners_positions(ids);//calib must be modified
-
-                //get shelf_pose変え途中shelfに対応id :-0.368293, -0.92971, 0)  : 0.004823
-                //(0.379477, -0.925201, 0)  : 0.019612
-                Vec3 camera_pose                         = {0.0,0.0,1.0};//get_camera_pose(calibration_camera_pose, calibration_shelf_pose, shelf_pose);
-                Vec3 camera_rotate_axis                  = {-0.368293, -0.92971, 0.0};//get_camera_rotate_axis(camera_pose);
-                double camera_rotate_rad                 = 0.004823;//get_camera_rotate_rad(camera_pose);
-                std::vector<Vec3> fov_vecs               = get_fov_vecs(ideal_fov_unit_vecs, camera_rotate_axis, camera_rotate_rad);
-                std::vector<std::vector<Vec3>> camera_to_aruco_vecs   = get_camera_to_aruco_vecs(corners, fov_vecs);
-                std::vector<std::vector<int>> pairs_id_and_index = get_pairs_id_and_index(ids, corners);
+                imu.read(pitch,roll);
+                double yaw                                          = get_yaw(corners);
+                Vec3 shelf_pose                                     = get_shelf_pose(pitch,roll);//get_shelf_pose(pitch,roll,yaw);
+                Vec3 camera_pose                                    = get_camera_pose(calibration_camera_pose, calibration_shelf_pose, shelf_pose);//get
+                Vec3 camera_rotate_axis                             = get_camera_rotate_axis(camera_pose);
+                double camera_rotate_rad                            = get_camera_rotate_rad(camera_pose);
+                std::vector<Vec3> fov_vecs                          = get_fov_vecs(ideal_fov_unit_vecs, camera_rotate_axis, camera_rotate_rad);//get_fov_vecs(ideal_fov_unit_vecs, camera_rotate_axis, camera_rotate_rad, yaw);
+                std::vector<std::vector<Vec3>> camera_to_aruco_vecs = get_camera_to_aruco_vecs(corners, fov_vecs);
+                std::vector<std::vector<int>>    pairs_id_and_index = get_pairs_id_and_index(ids, corners);
                 std::vector<std::pair<std::vector<Vec3>,int>> pairs_aruco_corners_positions_and_index = get_pairs_aruco_corners_positions_and_index(pairs_id_and_index);
-                Vec3 camera_world_positions = get_camera_world_positions(camera_to_aruco_vecs, pairs_aruco_corners_positions_and_index);
+                Vec3 camera_world_positions                         = get_camera_world_positions(camera_to_aruco_vecs, pairs_aruco_corners_positions_and_index);
                 
                 /*for (const auto& pos : fov_vecs) {
                     std::cout << "fov_vecs: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
@@ -101,6 +114,4 @@ int main() {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 1;
     }
-
-    return 0;
 }
