@@ -15,7 +15,6 @@
 #include <thread>
 #include <chrono>
 
-
 int main() {
     const char* devname = "/dev/video0";//要変更
     const char* param_file = "../param/camera_calib/baffalo_BSW300M.xml";
@@ -36,15 +35,11 @@ int main() {
         cv::Mat frame;
         cv::namedWindow("ArUco", cv::WINDOW_NORMAL);
 
-        //arg for test id :8camera_rotate0 :(0.822185, 0.56922, -0)  : 0.010426
-        double calibration_pitch = -0.0109;//get_calibration_pitch() //キャリブレーションは棚基準
-        double calibration_roll = 0.0698;//get_calibration_roll() //キャリブレーションは棚基準
-        Vec3 calibration_camera_pose = {0.0,0.0,1.0};//get_calibration_camera_pose() only cal by pitch and roll
-        Vec3 calibration_camera_axis = {0.822185, 0.56922, 0};
-        double calibration_camera_rad = 0.010426;
-        rot(calibration_camera_pose,calibration_camera_axis,ORIGIN,calibration_camera_rad,calibration_camera_pose);
-        std::vector<Vec3> ideal_fov_unit_vecs = get_ideal_fov_unit_vecs();
-        Vec3 calibration_shelf_pose           = get_calibration_shelf_pose(calibration_pitch,calibration_roll);//棚基準 must be cahnge
+        //arg for test
+        double calibration_pitch = -0.0109;//get_calibration_pitch()
+        double calibration_roll = 0.0698;//get_calibration_roll()
+        std::vector<Vec3> ideal_fov_unit_vecs = get_agv_ideal_fov_unit_vecs();
+        Vec3 calibration_agv_pose           = get_calibration_agv_pose(calibration_pitch,calibration_roll);//must be changed
 
         Modules::Hardware::IMU imu("/dev/pico_imu",calibration_pitch,calibration_roll);
         imu.init();
@@ -73,23 +68,22 @@ int main() {
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
                 imu.read(pitch,roll);//棚基準のpitch rollの変位をもらう
                 double yaw                                          = get_yaw(corners);
-                std::cout << "pitch" << pitch << "roll" << roll << std::endl;
-                Vec3 shelf_pose                                     = get_shelf_pose(pitch,roll,calibration_pitch,calibration_roll);//棚基準 must be cahnged
-                Vec3 camera_pose                                    = get_camera_pose(calibration_camera_pose, calibration_shelf_pose, shelf_pose,yaw);//ワールド座標基準 must be changed
-                Vec3 camera_rotate_axis                             = get_camera_rotate_axis(camera_pose);
-                double camera_rotate_rad                            = get_camera_rotate_rad(camera_pose);
-                std::vector<Vec3> fov_vecs                          = get_fov_vecs(ideal_fov_unit_vecs, camera_rotate_axis, camera_rotate_rad,yaw);//ワールド座標基準 must be changed
+                std::cout << "pitch" << pitch << "roll" << roll << "yaw" << yaw << std::endl;
+                Vec3 agv_pose                                       = get_agv_pose(pitch,roll,calibration_pitch,calibration_roll,yaw);//yaw check
+                Vec3 agv_rotate_axis                                = get_camera_rotate_axis(agv_pose);
+                double agv_rotate_rad                               = get_camera_rotate_rad(agv_pose);
+                std::vector<Vec3> fov_vecs                          = get_agv_fov_vecs(ideal_fov_unit_vecs, agv_rotate_axis, agv_rotate_rad,yaw);//ワールド座標基準 must be changed
                 std::vector<std::vector<Vec3>> camera_to_aruco_vecs = get_camera_to_aruco_vecs(corners, fov_vecs);
                 std::vector<std::vector<int>>    pairs_id_and_index = get_pairs_id_and_index(ids, corners);
                 std::vector<std::pair<std::vector<Vec3>,int>> pairs_aruco_corners_positions_and_index = get_pairs_aruco_corners_positions_and_index(pairs_id_and_index);
                 Vec3 camera_world_positions                         = get_camera_world_positions(camera_to_aruco_vecs, pairs_aruco_corners_positions_and_index);
+                Vec3 agv_world_positions                            = get_agv_world_positions(camera_world_positions,yaw);
                 auto log_vec = [](const std::string& name, const Vec3& v) {
                     std::cout << name << " : (" << v[0] << ", " << v[1] << ", " << v[2] << ")\n";
                 };
 
-                log_vec("camera_pose", camera_pose);
-                log_vec("camera_rotate_axis", camera_rotate_axis);
-                std::cout << "camera_rotate_rad: " << camera_rotate_rad << std::endl;
+                log_vec("agv_rotate_axis", agv_rotate_axis);
+                std::cout << "agv_rotate_rad: " << agv_rotate_rad << std::endl;
                 
                 /*for (const auto& pos : fov_vecs) {
                     std::cout << "fov_vecs: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
@@ -97,7 +91,7 @@ int main() {
                 //for (const auto& pos : camera_to_aruco_vecs) {
                   //  std::cout << "camera_to_aruco_vecs :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
                 //}
-                std::cout << "camera_world_positions :(" << camera_world_positions[0] << ", " << camera_world_positions[1] << ", " << camera_world_positions[2] << ")" << std::endl;
+                std::cout << "agv_world_positions :(" << agv_world_positions[0] << ", " << agv_world_positions[1] << ", " << agv_world_positions[2] << ")" << std::endl;
                 /*for (size_t i = 0; i < corners.size(); ++i) {
                     std::cout << "ID: " << ids[i] << std::endl;
                     for (size_t j = 0; j < corners[i].size(); ++j) {

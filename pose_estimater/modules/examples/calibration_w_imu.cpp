@@ -38,15 +38,11 @@ int main() {
 
         //arg for test 
         Vec3 shelf_world_position = {0.0,0.0,-3.0};
-        Vec3 shelf_rotate_axis = {1.0,0.0,0.0};
-        double shelf_rotate_rad = 0.001;
         Vec3 camera_world_position = {0.0,0.0,-1 * CAMERA_HEIGHT};//get_camera_world_position(shelf_world_position, shelf_rotate_axis, shelf_rotate_rad);
         std::vector<Vec3> ideal_fov_unit_vecs = get_ideal_fov_unit_vecs();
 
-        Modules::Hardware::IMU imu("pass",0,0);//must be changed
+        Modules::Hardware::IMU imu("/dev/pico_imu",0,0);//must be changed
         imu.init();
-        double pitch = 0.0;
-        double roll  = 0.0;
 
         while(true) {
             std::chrono::steady_clock::time_point tp;
@@ -71,13 +67,76 @@ int main() {
                 cv::aruco::drawDetectedMarkers(frame, corners, ids);
                 std::vector<std::vector<Vec3>> corners_positions = get_aruco_corners_positions(ids);
                 for (int i = 0; i < corners_positions.size(); i++ ) {
+                    double pitch = 0.0;
+                    double roll = 0.0;
                     imu.read(pitch,roll);
-                    std::vector<Vec3> ideal_aruco_unit_vecs = get_ideal_aruco_unit_vecs(camera_world_position, corners_positions[i]);//不必要かも
-                    std::vector<Vec3> ideal_aruco_positions = get_ideal_aruco_positions(ideal_aruco_unit_vecs, camera_world_position);//不必要かも
+                    std::vector<Vec3> ideal_aruco_unit_vecs = get_ideal_aruco_unit_vecs(camera_world_position, corners_positions[i]);
+                    std::vector<Vec3> ideal_aruco_positions = get_ideal_aruco_positions(ideal_aruco_unit_vecs, camera_world_position);
                     std::vector<Vec3> ideal_fov_positions = get_ideal_fov_positions(ideal_fov_unit_vecs, camera_world_position);
                     std::vector<std::vector<double>> ideal_aruco_screen_positions = get_ideal_aruco_screen_positions(ideal_aruco_positions,ideal_fov_positions);
                     std::vector<Vec3> camera_rotate_axis = get_camera_rotate_axis(ideal_aruco_screen_positions, corners[i]);
                     std::vector<double> camera_rotate_rad = get_camera_rotate_rad(camera_rotate_axis, ideal_aruco_positions, camera_world_position, ideal_fov_unit_vecs, corners[i]);
+
+
+
+                    // ideal_aruco_unit_vecs
+                    std::cout << "ideal_aruco_unit_vecs:" << std::endl;
+                    for (size_t j = 0; j < ideal_aruco_unit_vecs.size(); ++j) {
+                        std::cout << "  [" << j << "]: (" 
+                                << ideal_aruco_unit_vecs[j][0] << ", "
+                                << ideal_aruco_unit_vecs[j][1] << ", "
+                                << ideal_aruco_unit_vecs[j][2] << ")" << std::endl;
+                    }
+                    std::cout << std::endl;
+
+                    // ideal_aruco_positions
+                    std::cout << "ideal_aruco_positions:" << std::endl;
+                    for (size_t j = 0; j < ideal_aruco_positions.size(); ++j) {
+                        std::cout << "  [" << j << "]: (" 
+                                << ideal_aruco_positions[j][0] << ", "
+                                << ideal_aruco_positions[j][1] << ", "
+                                << ideal_aruco_positions[j][2] << ")" << std::endl;
+                    }
+                    std::cout << std::endl;
+
+                    // ideal_fov_positions
+                    std::cout << "ideal_fov_positions:" << std::endl;
+                    for (size_t j = 0; j < ideal_fov_positions.size(); ++j) {
+                        std::cout << "  [" << j << "]: (" 
+                                << ideal_fov_positions[j][0] << ", "
+                                << ideal_fov_positions[j][1] << ", "
+                                << ideal_fov_positions[j][2] << ")" << std::endl;
+                    }
+                    std::cout << std::endl;
+
+                    // ideal_aruco_screen_positions
+                    std::cout << "ideal_aruco_screen_positions:" << std::endl;
+                    for (size_t j = 0; j < ideal_aruco_screen_positions.size(); ++j) {
+                        std::cout << "  [" << j << "]: ";
+                        for (size_t k = 0; k < ideal_aruco_screen_positions[j].size(); ++k) {
+                            std::cout << ideal_aruco_screen_positions[j][k] << " ";
+                        }
+                        std::cout << std::endl;
+                    }
+                    std::cout << std::endl;
+
+                    // camera_rotate_axis
+                    std::cout << "camera_rotate_axis:" << std::endl;
+                    for (size_t j = 0; j < camera_rotate_axis.size(); ++j) {
+                        std::cout << "  [" << j << "]: (" 
+                                << camera_rotate_axis[j][0] << ", "
+                                << camera_rotate_axis[j][1] << ", "
+                                << camera_rotate_axis[j][2] << ")" << std::endl;
+                    }
+                    std::cout << std::endl;
+
+                    // camera_rotate_rad
+                    std::cout << "camera_rotate_rad:" << std::endl;
+                    for (size_t j = 0; j < camera_rotate_rad.size(); ++j) {
+                        std::cout << "  [" << j << "]: " << camera_rotate_rad[j] << std::endl;
+                    }
+                    std::cout << std::endl;
+
 
                     for (int j = 0; j < camera_rotate_axis.size(); j++) {
                         std::cout <<"id :" << ids[i] <<"camera_rotate" << j << " :(" << camera_rotate_axis[j][0] << ", " << camera_rotate_axis[j][1] << ", " << camera_rotate_axis[j][2] << ")  : " << camera_rotate_rad[j]  << std::endl;

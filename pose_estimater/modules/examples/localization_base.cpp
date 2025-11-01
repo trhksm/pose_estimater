@@ -83,34 +83,16 @@ int main() {
                 std::vector<std::vector<int>>    pairs_id_and_index = get_pairs_id_and_index(ids, corners);
                 std::vector<std::pair<std::vector<Vec3>,int>> pairs_aruco_corners_positions_and_index = get_pairs_aruco_corners_positions_and_index(pairs_id_and_index);
                 Vec3 camera_world_positions                         = get_camera_world_positions(camera_to_aruco_vecs, pairs_aruco_corners_positions_and_index);
+
+                Vec3 agv_world_positions                            = get_shelf_agv_world_positions(camera_world_positions,shelf_pose);
+
                 auto log_vec = [](const std::string& name, const Vec3& v) {
                     std::cout << name << " : (" << v[0] << ", " << v[1] << ", " << v[2] << ")\n";
                 };
-
                 log_vec("camera_pose", camera_pose);
                 log_vec("camera_rotate_axis", camera_rotate_axis);
                 std::cout << "camera_rotate_rad: " << camera_rotate_rad << std::endl;
-                
-                /*for (const auto& pos : fov_vecs) {
-                    std::cout << "fov_vecs: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                }*/
-                //for (const auto& pos : camera_to_aruco_vecs) {
-                  //  std::cout << "camera_to_aruco_vecs :(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-                //}
                 std::cout << "camera_world_positions :(" << camera_world_positions[0] << ", " << camera_world_positions[1] << ", " << camera_world_positions[2] << ")" << std::endl;
-                /*for (size_t i = 0; i < corners.size(); ++i) {
-                    std::cout << "ID: " << ids[i] << std::endl;
-                    for (size_t j = 0; j < corners[i].size(); ++j) {
-                        const auto& pt = corners[i][j];
-                        std::cout << "  corner[" << j << "]: (" << pt.x << ", " << pt.y << ")" << std::endl;
-                    }    
-                }
-                */
-
-                //save_vec3_vectors("../testdata/localization/ideal_fov_unit_vecs.txt", ideal_fov_unit_vecs);
-                //save_vec3_vectors("../testdata/localization/fov_vecs.txt", fov_vecs);
-                //save_vec3_vectors("../testdata/localization/camera_to_aruco_vecs.txt", camera_to_aruco_vecs);
-                //save_vec3_vectors("../testdata/localization/camera_world_positions.txt", camera_world_positions);
             } 
             cv::imshow("ArUco", frame);
 
